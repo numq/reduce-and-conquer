@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<resources>
+    <string name="application_name">Reduce &amp; Conquer</string>
+
+    <string name="daily_pokemon_of_the_day">Pokemon of the day</string>
+
+    <string name="filter_reset">Reset</string>
+    <string name="filter_cancel">Cancel</string>
+    <string name="filter_type">Type</string>
+    <string name="filter_hp">Health Points</string>
+    <string name="filter_speed">Speed</string>
+    <string name="filter_basic_attack">Basic Attack</string>
+    <string name="filter_basic_defense">Basic Defense</string>
+    <string name="filter_special_attack">Special Attack</string>
+    <string name="filter_special_defense">Special Defense</string>
+
+    <string name="pokemon_attribute_hp">Health Points</string>
+    <string name="pokemon_attribute_speed">Speed</string>
+    <string name="pokemon_attribute_basic_attack">Basic Attack</string>
+    <string name="pokemon_attribute_basic_defense">Basic Defense</string>
+    <string name="pokemon_attribute_special_attack">Special Attack</string>
+    <string name="pokemon_attribute_special_defense">Special Defense</string>
+
+    <string name="pokemon_attribute_hp_short">HP</string>
+    <string name="pokemon_attribute_speed_short">SPD</string>
+    <string name="pokemon_attribute_basic_attack_short">ATK</string>
+    <string name="pokemon_attribute_basic_defense_short">DEF</string>
+    <string name="pokemon_attribute_special_attack_short">SP.ATK</string>
+    <string name="pokemon_attribute_special_defense_short">SP.DEF</string>
+
+    <string name="sort_name">Name</string>
+    <string name="sort_hp">Health Points</string>
+    <string name="sort_speed">Speed</string>
+    <string name="sort_basic_attack">Basic Attack</string>
+    <string name="sort_basic_defense">Basic Defense</string>
+    <string name="sort_special_attack">Special Attack</string>
+    <string name="sort_special_defense">Special Defense</string>
+</resources>
