@@ -22,11 +22,11 @@
     <string name="pokemon_attribute_special_defense">Special Defense</string>
 
     <string name="pokemon_attribute_hp_short">HP</string>
-    <string name="pokemon_attribute_speed_short">SPD</string>
-    <string name="pokemon_attribute_basic_attack_short">ATK</string>
-    <string name="pokemon_attribute_basic_defense_short">DEF</string>
-    <string name="pokemon_attribute_special_attack_short">SP.ATK</string>
-    <string name="pokemon_attribute_special_defense_short">SP.DEF</string>
+    <string name="pokemon_attribute_speed_short">Speed</string>
+    <string name="pokemon_attribute_basic_attack_short">Attack</string>
+    <string name="pokemon_attribute_basic_defense_short">Defense</string>
+    <string name="pokemon_attribute_special_attack_short">Sp. Attack</string>
+    <string name="pokemon_attribute_special_defense_short">Sp. Defense</string>
 
     <string name="sort_name">Name</string>
     <string name="sort_hp">Health Points</string>

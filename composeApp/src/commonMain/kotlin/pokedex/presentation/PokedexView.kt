@@ -16,6 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import notification.Notification
@@ -92,7 +93,7 @@ fun PokedexView(feature: PokedexFeature, gridState: LazyGridState) {
                 ) {
                     state.maxAttributeValue?.let { maxAttributeValue ->
                         PokedexGrid(
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier.fillMaxSize().padding(8.dp),
                             gridState = gridState,
                             maxAttributeValue = maxAttributeValue,
                             pokemons = state.pokemons,

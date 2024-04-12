@@ -39,27 +39,35 @@ fun PokemonAttributeChart(
             var index = 0
             while (isActive) {
                 index = (index + 1) % colors.size
-                animatedColor.animateTo(
-                    Color(colors[index]),
-                    animationSpec = tween(durationMillis = 500, delayMillis = 500, easing = LinearEasing)
-                )
+                (Color(colors[index])).let { color ->
+                    if (animatedColor.value == Color.Unspecified) animatedColor.snapTo(color)
+                    else animatedColor.animateTo(
+                        color, animationSpec = tween(
+                            durationMillis = 500,
+                            delayMillis = 500,
+                            easing = LinearEasing
+                        )
+                    )
+                }
             }
         }
     }
 
     Canvas(modifier = modifier) {
-        val size = (minOf(size.width, size.height) * 0.75f).let { side -> Size(side, side) }
+        val size = (minOf(size.width, size.height) * 0.5f).let { Size(it, it) }
 
         val outerHexagonVertices = calculateHexagonVertices(
             values = List(items.size) { maxAttributeValue },
             center = center,
-            size = size
+            size = size,
+            maxValue = maxAttributeValue
         )
 
         val innerHexagonVertices = calculateHexagonVertices(
             values = items.map(ChartItem::value),
             center = center,
-            size = size.times(.75f)
+            size = size,
+            maxValue = maxAttributeValue
         )
 
         for (i in 0..<6) {
@@ -129,8 +137,7 @@ fun PokemonAttributeChart(
     }
 }
 
-fun calculateHexagonVertices(values: List<Int>, center: Offset, size: Size): List<Offset> {
-    val maxValue = values.maxOrNull() ?: return emptyList()
+fun calculateHexagonVertices(values: List<Int>, center: Offset, size: Size, maxValue: Int): List<Offset> {
     val vertices = mutableListOf<Offset>()
     val radius = minOf(size.width, size.height) / 2
     val angleDeg = 360f / values.size

@@ -1,6 +1,5 @@
 package daily
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -14,8 +13,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import notification.Notification
@@ -43,30 +44,29 @@ fun DailyView(feature: DailyFeature) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Box(modifier = Modifier.fillMaxWidth().padding(8.dp), contentAlignment = Alignment.Center) {
-                Text(
-                    stringResource(Res.string.daily_pokemon_of_the_day),
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                this@Column.AnimatedVisibility(
+            Text(
+                stringResource(Res.string.daily_pokemon_of_the_day),
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+            Box(modifier = Modifier.weight(1f).zIndex(-1f), contentAlignment = Alignment.Center) {
+                androidx.compose.animation.AnimatedVisibility(
                     state.maxAttributeValue == null || state.pokemon == null,
                     enter = fadeIn(),
                     exit = fadeOut()
                 ) {
                     CircularProgressIndicator()
                 }
-                this@Column.AnimatedVisibility(
+                androidx.compose.animation.AnimatedVisibility(
                     state.maxAttributeValue != null && state.pokemon != null,
                     enter = fadeIn(),
                     exit = fadeOut()
                 ) {
                     state.maxAttributeValue?.let { maxAttributeValue ->
                         state.pokemon?.let { pokemon ->
-                            DailyPokemonCard(
-                                modifier = Modifier.fillMaxSize(),
+                            PokemonCard(
+                                modifier = Modifier.aspectRatio(.75f).padding(8.dp),
                                 pokemon = pokemon,
                                 maxAttributeValue = maxAttributeValue
                             )
