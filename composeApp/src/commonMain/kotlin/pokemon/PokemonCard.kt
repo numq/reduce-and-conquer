@@ -97,18 +97,18 @@ fun PokemonCard(modifier: Modifier, pokemon: Pokemon, maxAttributeValue: Int) {
                 }
             }
             Row(
-                modifier = Modifier.width(IntrinsicSize.Max).then(rotationModifier),
+                modifier = Modifier.fillMaxWidth().then(rotationModifier),
                 horizontalArrangement = Arrangement.spacedBy(8.dp, alignment = Alignment.CenterHorizontally),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 pokemon.types.forEach { type ->
-                    Card(modifier = Modifier.weight(1f), backgroundColor = Color(type.color)) {
+                    Card(backgroundColor = Color(type.color)) {
                         Text(
                             text = type.name,
                             textAlign = TextAlign.Center,
                             color = Color.White,
                             fontSize = 16.sp,
-                            modifier = Modifier.padding(8.dp)
+                            modifier = Modifier.weight(1f).padding(8.dp)
                         )
                     }
                 }

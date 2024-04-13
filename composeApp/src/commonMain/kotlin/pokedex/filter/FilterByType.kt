@@ -1,6 +1,8 @@
 package pokedex.filter
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.material.ChipDefaults
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.FilterChip
@@ -14,44 +16,35 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import pokemon.Pokemon
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalLayoutApi::class)
 @Composable
 fun FilterByType(
+    modifier: Modifier,
     filter: PokedexFilter.Type,
     updateFilter: (PokedexFilter.Type) -> Unit,
 ) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+    FlowRow(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(8.dp, alignment = Alignment.CenterHorizontally),
+        verticalArrangement = Arrangement.spacedBy(8.dp, alignment = Alignment.CenterVertically)
     ) {
-        Pokemon.Type.entries.chunked(Pokemon.Type.entries.size / 3).forEach { chunk ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
+        Pokemon.Type.entries.forEach { type ->
+            FilterChip(
+                selected = type in filter.modified,
+                onClick = {
+                    updateFilter(filter.copy(modified = filter.modified.let { types ->
+                        if (type in types) types.minus(type)
+                        else types.plus(type)
+                    }))
+                },
+                colors = ChipDefaults.filterChipColors(backgroundColor = Color.White)
             ) {
-                chunk.forEach { type ->
-                    FilterChip(
-                        selected = type in filter.modified,
-                        onClick = {
-                            updateFilter(filter.copy(modified = filter.modified.let { types ->
-                                if (type in types) types.minus(type)
-                                else types.plus(type)
-                            }))
-                        },
-                        colors = ChipDefaults.filterChipColors(backgroundColor = Color.White),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(
-                            type.name,
-                            color = Color(type.color),
-                            fontSize = 16.sp,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.weight(1f).padding(8.dp)
-                        )
-                    }
-                }
+                Text(
+                    text = type.name,
+                    color = Color(type.color),
+                    fontSize = 16.sp,
+                    textAlign = TextAlign.Center
+                )
             }
         }
     }

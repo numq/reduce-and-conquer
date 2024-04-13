@@ -31,7 +31,7 @@ import reduce_and_conquer.composeapp.generated.resources.daily_pokemon_of_the_da
 @Composable
 fun DailyView(feature: DailyFeature) {
     val state by feature.state.collectAsState()
-    val errors = feature.effect.filterIsInstance(DailyEffect.Error::class).map { error ->
+    val errors = feature.effects.filterIsInstance(DailyEffect.Error::class).map { error ->
         Notification.Error(durationMillis = 3_000L, message = error.message)
     }
 

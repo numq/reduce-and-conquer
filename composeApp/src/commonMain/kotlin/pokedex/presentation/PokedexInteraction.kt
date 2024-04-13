@@ -19,6 +19,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import pokedex.filter.FilterInteraction
 import pokedex.filter.PokedexFilter
 import pokedex.sort.PokedexSort
@@ -86,7 +87,10 @@ fun PokedexInteraction(
                 )
             }
         }
-        Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp), contentAlignment = Alignment.Center) {
+        Box(
+            modifier = Modifier.fillMaxWidth().zIndex(1f).padding(horizontal = 8.dp),
+            contentAlignment = Alignment.Center
+        ) {
             when (interactionMode) {
                 PokedexInteractionMode.NONE -> Unit
 

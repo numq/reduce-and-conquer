@@ -9,7 +9,6 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.ExperimentalResourceApi
@@ -40,14 +39,16 @@ fun FilterInteraction(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Button(onClick = { resetFilters() },
+            Button(
+                onClick = { resetFilters() },
                 enabled = isFiltered,
-                modifier = Modifier.composed { if (selectedFilter == null) weight(1f) else this }) {
-                Text(stringResource(Res.string.filter_reset), fontWeight = FontWeight.Thin)
+                modifier = Modifier.weight(.5f)
+            ) {
+                Text(stringResource(Res.string.filter_reset), fontWeight = FontWeight.SemiBold)
             }
             if (selectedFilter != null) {
-                Button(onClick = { closeFilter() }, modifier = Modifier.weight(1f)) {
-                    Text(stringResource(Res.string.filter_cancel), fontWeight = FontWeight.Thin)
+                Button(onClick = { closeFilter() }, modifier = Modifier.weight(.5f)) {
+                    Text(stringResource(Res.string.filter_cancel), fontWeight = FontWeight.SemiBold)
                 }
             }
         }

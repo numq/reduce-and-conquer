@@ -16,6 +16,7 @@ import slider.IntRangeSlider
 
 @Composable
 fun FilterByAttribute(
+    modifier: Modifier,
     filter: PokedexFilter.Attribute,
     updateFilter: (PokedexFilter.Attribute) -> Unit,
 ) {
@@ -31,7 +32,7 @@ fun FilterByAttribute(
     }
 
     Column(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {

@@ -2,6 +2,7 @@ package pokedex.filter
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,9 +21,17 @@ fun SelectedFilter(
         when (filter) {
             is PokedexFilter.Name -> Unit
 
-            is PokedexFilter.Type -> FilterByType(filter = filter, updateFilter = updateFilter)
+            is PokedexFilter.Type -> FilterByType(
+                modifier = Modifier.fillMaxWidth(),
+                filter = filter,
+                updateFilter = updateFilter
+            )
 
-            is PokedexFilter.Attribute -> FilterByAttribute(filter = filter, updateFilter = updateFilter)
+            is PokedexFilter.Attribute -> FilterByAttribute(
+                modifier = Modifier.fillMaxWidth(),
+                filter = filter,
+                updateFilter = updateFilter
+            )
         }
     }
 }

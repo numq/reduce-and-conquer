@@ -8,24 +8,23 @@ abstract class Feature<State, Message, Effect : feature.Effect<*>>(
     initialState: State,
     coroutineScope: CoroutineScope,
 ) {
+    private val messages = Channel<Message>(Channel.UNLIMITED)
+
     private val _state = MutableStateFlow(initialState)
     val state = _state.asStateFlow()
 
-    private val _message = Channel<Message>(Channel.UNLIMITED)
-    val message = _message.receiveAsFlow()
+    private val _effects = Channel<Effect>(Channel.UNLIMITED)
+    val effects = _effects.receiveAsFlow().shareIn(scope = coroutineScope, started = SharingStarted.Lazily)
 
-    private val _effect = Channel<Effect>(Channel.UNLIMITED)
-    val effect = _effect.receiveAsFlow().shareIn(coroutineScope, started = SharingStarted.Lazily)
+    fun dispatchMessage(message: Message) = messages.trySend(message).isSuccess
 
-    fun dispatchMessage(message: Message) = _message.trySend(message).isSuccess
-
-    fun performEffect(effect: Effect) = _effect.trySend(effect).isSuccess
+    fun performEffect(effect: Effect) = _effects.trySend(effect).isSuccess
 
     open suspend fun reduce(state: State, message: Message) = state
 
     init {
-        message.onEach { message ->
-            _state.emit(reduce(state.value, message))
+        messages.receiveAsFlow().onEach { message ->
+            _state.value = reduce(_state.value, message)
         }.launchIn(coroutineScope)
     }
 }

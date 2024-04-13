@@ -1,6 +1,8 @@
 package pokedex.filter
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.material.Button
 import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Text
@@ -13,19 +15,19 @@ import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 import reduce_and_conquer.composeapp.generated.resources.*
 
-@OptIn(ExperimentalResourceApi::class)
+@OptIn(ExperimentalResourceApi::class, ExperimentalLayoutApi::class)
 @Composable
 fun FilterRow(
     modifier: Modifier,
     filters: List<PokedexFilter>,
     selectFilter: (PokedexFilter.Criteria) -> Unit,
 ) {
-    Row(
-        modifier = modifier.height(IntrinsicSize.Max),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
+    FlowRow(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(8.dp, alignment = Alignment.CenterHorizontally),
+        verticalArrangement = Arrangement.Center
     ) {
-        filters.filterNot { it.criteria == PokedexFilter.Criteria.NAME }.forEach { filter ->
+        filters.filterNot { filter -> filter.criteria == PokedexFilter.Criteria.NAME }.forEach { filter ->
             when (filter.criteria) {
                 PokedexFilter.Criteria.TYPE -> Res.string.filter_type
 
@@ -44,15 +46,11 @@ fun FilterRow(
                 else -> null
             }?.let { res ->
                 if (filter.isModified()) {
-                    OutlinedButton(modifier = Modifier.weight(1f).fillMaxHeight(), onClick = {
-                        selectFilter(filter.criteria)
-                    }) {
+                    OutlinedButton(onClick = { selectFilter(filter.criteria) }) {
                         Text(stringResource(res), textAlign = TextAlign.Center)
                     }
                 } else {
-                    Button(modifier = Modifier.weight(1f).fillMaxHeight(), onClick = {
-                        selectFilter(filter.criteria)
-                    }) {
+                    Button(onClick = { selectFilter(filter.criteria) }) {
                         Text(stringResource(res), textAlign = TextAlign.Center)
                     }
                 }

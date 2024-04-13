@@ -25,7 +25,7 @@ import notification.NotificationError
 @Composable
 fun PokedexView(feature: PokedexFeature, gridState: LazyGridState) {
     val state by feature.state.collectAsState()
-    val errors = feature.effect.filterIsInstance(PokedexEffect.Error::class).map { error ->
+    val errors = feature.effects.filterIsInstance(PokedexEffect.Error::class).map { error ->
         Notification.Error(
             durationMillis = 3_000L,
             message = error.message
@@ -33,7 +33,7 @@ fun PokedexView(feature: PokedexFeature, gridState: LazyGridState) {
     }
 
     LaunchedEffect(Unit) {
-        feature.effect.collect { effect ->
+        feature.effects.collect { effect ->
             when (effect) {
                 is PokedexEffect.ScrollToStart -> gridState.animateScrollToItem(0)
 
