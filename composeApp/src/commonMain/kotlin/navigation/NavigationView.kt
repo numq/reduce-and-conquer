@@ -32,25 +32,25 @@ fun NavigationView(feature: NavigationFeature) {
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-            this@Column.AnimatedVisibility(visible = state.destination == Destination.DAILY,
+            this@Column.AnimatedVisibility(visible = state is NavigationState.Daily,
                 enter = slideInHorizontally { -it },
                 exit = slideOutHorizontally { -it }) {
                 DailyView(feature = koinInject())
             }
-            this@Column.AnimatedVisibility(visible = state.destination == Destination.POKEDEX,
+            this@Column.AnimatedVisibility(visible = state is NavigationState.Pokedex,
                 enter = slideInHorizontally { it },
                 exit = slideOutHorizontally { it }) {
                 PokedexView(feature = koinInject(), gridState = pokedexGridState)
             }
         }
         BottomNavigation(modifier = Modifier.fillMaxWidth()) {
-            BottomNavigationItem(selected = state.destination == Destination.DAILY, onClick = {
-                feature.dispatchMessage(NavigationMessage.NavigateTo(Destination.DAILY))
+            BottomNavigationItem(selected = state is NavigationState.Daily, onClick = {
+                feature.dispatchMessage(NavigationMessage.NavigateToDaily)
             }, icon = {
                 Icon(Icons.Default.Today, null)
             })
-            BottomNavigationItem(selected = state.destination == Destination.POKEDEX, onClick = {
-                feature.dispatchMessage(NavigationMessage.NavigateTo(Destination.POKEDEX))
+            BottomNavigationItem(selected = state is NavigationState.Pokedex, onClick = {
+                feature.dispatchMessage(NavigationMessage.NavigateToPokedex)
             }, icon = {
                 Icon(Icons.Default.GridView, null)
             })

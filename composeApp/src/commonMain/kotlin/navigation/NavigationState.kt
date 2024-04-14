@@ -1,3 +1,6 @@
 package navigation
 
-data class NavigationState(val destination: Destination = Destination.DAILY)
+sealed interface NavigationState {
+    data object Daily : NavigationState
+    data object Pokedex : NavigationState
+}

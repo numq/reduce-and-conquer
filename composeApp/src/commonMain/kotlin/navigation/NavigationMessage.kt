@@ -1,5 +1,6 @@
 package navigation
 
 sealed interface NavigationMessage {
-    data class NavigateTo(val destination: Destination) : NavigationMessage
+    data object NavigateToDaily : NavigationMessage
+    data object NavigateToPokedex : NavigationMessage
 }
