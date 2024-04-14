@@ -9,7 +9,7 @@ interface PokedexRepository {
     fun addFilter(filter: PokedexFilter): Result<PokedexFilter>
     fun selectFilter(criteria: PokedexFilter.Criteria): Result<PokedexFilter>
     fun updateFilter(filter: PokedexFilter): Result<PokedexFilter>
-    fun resetFilter(criteria: PokedexFilter.Criteria): Result<Unit>
+    fun resetFilter(criteria: PokedexFilter.Criteria): Result<PokedexFilter>
     fun resetFilters(): Result<Unit>
     fun changeSort(sort: PokedexSort): Result<PokedexSort>
 
@@ -26,18 +26,18 @@ interface PokedexRepository {
         }
 
         override fun updateFilter(filter: PokedexFilter) = runCatching {
-            if (filters.containsKey(filter.criteria)){
+            if (filters.containsKey(filter.criteria)) {
                 filters[filter.criteria] = filter
                 filters.getValue(filter.criteria)
-            } else{
+            } else {
                 throw Exception("Unable to update a non-existent filter")
             }
         }
 
         override fun resetFilter(criteria: PokedexFilter.Criteria) = runCatching {
-            filters[criteria]?.reset()?.let { filter ->
-                filters[criteria] = filter
-            } ?: Unit
+            val filter = filters.getValue(criteria)
+            filters[criteria] = filter.reset()
+            filters.getValue(criteria)
         }
 
         override fun resetFilters() = runCatching {

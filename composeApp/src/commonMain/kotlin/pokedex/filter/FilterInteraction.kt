@@ -25,6 +25,7 @@ fun FilterInteraction(
     isFiltered: Boolean,
     selectedFilter: PokedexFilter?,
     selectFilter: (PokedexFilter.Criteria) -> Unit,
+    resetFilter: (PokedexFilter.Criteria) -> Unit,
     updateFilter: (PokedexFilter) -> Unit,
     closeFilter: () -> Unit,
     resetFilters: () -> Unit,
@@ -40,7 +41,11 @@ fun FilterInteraction(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Button(
-                onClick = { resetFilters() },
+                onClick = {
+                    selectedFilter?.let { filter ->
+                        resetFilter(filter.criteria)
+                    } ?: resetFilters()
+                },
                 enabled = isFiltered,
                 modifier = Modifier.weight(.5f)
             ) {

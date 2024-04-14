@@ -15,6 +15,7 @@ sealed interface PokedexMessage {
         data object ToggleFilterMode : Filter
         data class SelectFilter(val criteria: PokedexFilter.Criteria) : Filter
         data class UpdateFilter(val filter: PokedexFilter) : Filter
+        data class ResetFilter(val criteria: PokedexFilter.Criteria) : Filter
         data object CloseFilter : Filter
         data object ResetFilters : Filter
     }

@@ -41,9 +41,10 @@ private val pokedex = module {
     factory { GetFilters(get()) }
     factory { SelectFilter(get()) }
     factory { UpdateFilter(get()) }
+    factory { ResetFilter(get()) }
     factory { ResetFilters(get()) }
     factory { ChangeSort(get()) }
-    single { PokedexFeature(get(), get(), get(), get(), get(), get(), get(), get()) }
+    single { PokedexFeature(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
 }
 
 internal val appModule = listOf(application, pokemon, navigation, daily, pokedex)

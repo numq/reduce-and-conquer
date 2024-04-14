@@ -11,16 +11,19 @@ import pokedex.sort.ChangeSort
 
 class PokedexFeature(
     private val getMaxAttributeValue: GetMaxAttributeValue,
-    private val initializeFilters: InitializeFilters,
     private val getPokemons: GetPokemons,
+    private val initializeFilters: InitializeFilters,
     private val getFilters: GetFilters,
     private val selectFilter: SelectFilter,
     private val updateFilter: UpdateFilter,
+    private val resetFilter: ResetFilter,
     private val resetFilters: ResetFilters,
     private val changeSort: ChangeSort,
+    initialState: PokedexState = PokedexState(),
     coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
 ) : Feature<PokedexState, PokedexMessage, PokedexEffect>(
-    initialState = PokedexState(), coroutineScope = coroutineScope
+    initialState = initialState,
+    coroutineScope = coroutineScope
 ) {
     object Constants {
         const val LIMIT = 18L
@@ -50,14 +53,12 @@ class PokedexFeature(
             }.getOrThrow()
         }
 
-        is PokedexMessage.Pokemons.LoadMorePokemons -> getFilters.execute(Unit).mapCatching { filters ->
-            getPokemons.execute(
-                GetPokemons.Input(skip = state.pokemons.size.toLong(), limit = Constants.LIMIT)
-            ).map { pokemons ->
-                state.copy(pokemons = state.pokemons.plus(pokemons))
-            }.onFailure {
-                performEffect(PokedexEffect.Error.LoadMore())
-            }.getOrThrow()
+        is PokedexMessage.Pokemons.LoadMorePokemons -> getPokemons.execute(
+            GetPokemons.Input(skip = state.pokemons.size.toLong(), limit = Constants.LIMIT)
+        ).map { pokemons ->
+            state.copy(pokemons = state.pokemons.plus(pokemons))
+        }.onFailure {
+            performEffect(PokedexEffect.Error.LoadMore())
         }
     }
 
@@ -96,28 +97,44 @@ class PokedexFeature(
             performEffect(PokedexEffect.Error.UnableToUpdateFilter())
         }
 
+        is PokedexMessage.Filter.ResetFilter -> if (state.isFiltered) {
+            resetFilter.execute(message.criteria).map { updatedFilter ->
+                reduce(
+                    state.copy(
+                        filters = state.filters.map { filter ->
+                            if (updatedFilter.criteria == filter.criteria) updatedFilter else filter
+                        },
+                        selectedFilter = updatedFilter
+                    ),
+                    PokedexMessage.Pokemons.GetPokemons(skip = 0, limit = Constants.LIMIT)
+                )
+            }.onFailure {
+                performEffect(PokedexEffect.Error.UnableToResetFilter())
+            }
+        } else {
+            Result.success(state)
+        }
+
         is PokedexMessage.Filter.CloseFilter -> Result.success(
             state.copy(selectedFilter = null)
         )
 
-        is PokedexMessage.Filter.ResetFilters -> {
-            if (state.isFiltered) {
-                resetFilters.execute(Unit).mapCatching {
-                    getFilters.execute(Unit).map { filters ->
-                        reduce(
-                            state.copy(
-                                filters = filters,
-                                selectedFilter = filters.find { filter -> filter.criteria == state.selectedFilter?.criteria }
-                            ),
-                            PokedexMessage.Pokemons.GetPokemons(skip = 0, limit = Constants.LIMIT)
-                        )
-                    }.getOrThrow()
-                }.onFailure {
-                    performEffect(PokedexEffect.Error.UnableToResetFilters())
-                }
-            } else {
-                Result.success(state)
+        is PokedexMessage.Filter.ResetFilters -> if (state.isFiltered) {
+            resetFilters.execute(Unit).mapCatching {
+                getFilters.execute(Unit).map { filters ->
+                    reduce(
+                        state.copy(
+                            filters = filters,
+                            selectedFilter = filters.find { filter -> filter.criteria == state.selectedFilter?.criteria }
+                        ),
+                        PokedexMessage.Pokemons.GetPokemons(skip = 0, limit = Constants.LIMIT)
+                    )
+                }.getOrThrow()
+            }.onFailure {
+                performEffect(PokedexEffect.Error.UnableToResetFilters())
             }
+        } else {
+            Result.success(state)
         }
     }
 

@@ -21,34 +21,10 @@ interface PokemonRepository {
                 fileProvider.open("files/pokedex.json").map(ByteArray::decodeToString).map { json ->
                     jsonParser.decodeFromString<Array<PokemonJson>>(json)
                 }.map { pokemons ->
-                    pokemons.map { pokemon ->
+                    pokemons.map(PokemonJson::toPokemon).map { pokemon ->
                         val imageName = "${pokemon.id}".padStart(3, '0')
                         val imageBytes = fileProvider.open("drawable/pokemon/$imageName.png").getOrThrow()
-                        with(pokemon) {
-                            Pokemon(
-                                id = id,
-                                name = name.english,
-                                types = types.map { type -> Pokemon.Type.valueOf(type.uppercase()) }.toSet(),
-                                attributes = with(attributes) {
-                                    Pokemon.Attributes(
-                                        hp = Pokemon.Attribute(
-                                            kind = Pokemon.Attribute.Kind.HP, value = hp
-                                        ), speed = Pokemon.Attribute(
-                                            kind = Pokemon.Attribute.Kind.SPEED, value = speed
-                                        ), basicAttack = Pokemon.Attribute(
-                                            kind = Pokemon.Attribute.Kind.BASIC_ATTACK, value = basicAttack
-                                        ), basicDefense = Pokemon.Attribute(
-                                            kind = Pokemon.Attribute.Kind.BASIC_DEFENSE, value = basicDefense
-                                        ), specialAttack = Pokemon.Attribute(
-                                            kind = Pokemon.Attribute.Kind.SPECIAL_ATTACK, value = specialAttack
-                                        ), specialDefense = Pokemon.Attribute(
-                                            kind = Pokemon.Attribute.Kind.SPECIAL_DEFENSE, value = specialDefense
-                                        )
-                                    )
-                                },
-                                imageBytes = imageBytes
-                            )
-                        }
+                        pokemon.copy(imageBytes = imageBytes)
                     }
                 }
             }

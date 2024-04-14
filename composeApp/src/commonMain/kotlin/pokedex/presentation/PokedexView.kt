@@ -74,6 +74,9 @@ fun PokedexView(feature: PokedexFeature, gridState: LazyGridState) {
                     updateFilter = { filter ->
                         feature.dispatchMessage(PokedexMessage.Filter.UpdateFilter(filter))
                     },
+                    resetFilter = { criteria ->
+                        feature.dispatchMessage(PokedexMessage.Filter.ResetFilter(criteria))
+                    },
                     closeFilter = {
                         feature.dispatchMessage(PokedexMessage.Filter.CloseFilter)
                     },

@@ -36,6 +36,7 @@ fun PokedexInteraction(
     toggleFilterMode: () -> Unit,
     selectFilter: (PokedexFilter.Criteria) -> Unit,
     updateFilter: (PokedexFilter) -> Unit,
+    resetFilter: (PokedexFilter.Criteria) -> Unit,
     closeFilter: () -> Unit,
     resetFilters: () -> Unit,
     toggleSortMode: () -> Unit,
@@ -101,6 +102,7 @@ fun PokedexInteraction(
                     selectedFilter = selectedFilter,
                     selectFilter = selectFilter,
                     updateFilter = updateFilter,
+                    resetFilter = resetFilter,
                     closeFilter = closeFilter,
                     resetFilters = resetFilters
                 )
