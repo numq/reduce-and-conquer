@@ -17,9 +17,11 @@ kotlin = "1.9.22"
 kotlinx-datetime = "0.6.0-RC.2"
 kotlinx-serialization-json = "1.6.3"
 kotlinx-serialization-plugin = "1.9.22"
-koin-core = "3.6.0-wasm-alpha2"
-koin-compose = "3.6.0-wasm-alpha2"
+koin = "3.6.0-wasm-alpha2"
 uuid = "0.8.4"
+kotlinx-coroutines = "1.8.0"
+mockk = "1.13.10"
+mockk-common = "1.12.5"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -36,9 +38,13 @@ compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = 
 compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "compose" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization-json" }
-koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin-core" }
-koin-compose = { module = "io.insert-koin:koin-compose", version.ref = "koin-compose" }
+koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
+koin-compose = { module = "io.insert-koin:koin-compose", version.ref = "koin" }
 uuid = { module = "com.benasher44:uuid", version.ref = "uuid" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+mockk-common = { module = "io.mockk:mockk-common", version.ref = "mockk-common" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

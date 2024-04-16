@@ -63,14 +63,21 @@ kotlin {
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
             implementation(compose.materialIconsExtended)
+            implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.datetime)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
             implementation(libs.uuid)
         }
+        commonTest.dependencies {
+            implementation(libs.kotlin.test.junit)
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.mockk.common)
+        }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
+            implementation(libs.mockk)
         }
     }
 }
