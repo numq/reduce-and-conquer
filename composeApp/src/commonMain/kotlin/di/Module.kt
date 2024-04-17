@@ -14,6 +14,7 @@ import pokedex.filter.*
 import pokedex.presentation.PokedexFeature
 import pokedex.sort.ChangeSort
 import pokemon.PokemonRepository
+import pokemon.PokemonService
 
 private val application = module {
     single { FileProvider.Implementation() } bind FileProvider::class
@@ -21,7 +22,8 @@ private val application = module {
 }
 
 private val pokemon = module {
-    single { PokemonRepository.Implementation(get(), get()) } bind PokemonRepository::class
+    single { PokemonService.Implementation(get(), get()) } bind PokemonService::class
+    single { PokemonRepository.Implementation(get()) } bind PokemonRepository::class
 }
 
 private val navigation = module {
