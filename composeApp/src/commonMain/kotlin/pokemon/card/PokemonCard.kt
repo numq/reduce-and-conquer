@@ -32,8 +32,7 @@ fun PokemonCard(modifier: Modifier, pokemon: Pokemon, maxAttributeValue: Int) {
     val (cardSide, setCardSide) = remember { mutableStateOf<PokemonCardSide>(PokemonCardSide.Front) }
 
     val animatedRotation = animateFloatAsState(
-        targetValue = cardSide.angle,
-        animationSpec = tween(
+        targetValue = cardSide.angle, animationSpec = tween(
             durationMillis = 500,
             easing = FastOutSlowInEasing,
         )
@@ -43,17 +42,14 @@ fun PokemonCard(modifier: Modifier, pokemon: Pokemon, maxAttributeValue: Int) {
         rotationY = animatedRotation.value
         cameraDistance = 16f * density
     }.clickable(
-        interactionSource = MutableInteractionSource(),
-        indication = null
+        interactionSource = MutableInteractionSource(), indication = null
     ) {
         setCardSide(cardSide.flip())
     }) {
         if (animatedRotation.value <= 90f) PokemonCardFront(
-            modifier = modifier,
-            pokemon = pokemon,
-            bitmap = bitmap
+            modifier = Modifier.then(modifier), pokemon = pokemon, bitmap = bitmap
         ) else PokemonCardBack(
-            modifier = modifier,
+            modifier = Modifier.graphicsLayer(rotationY = 180f).then(modifier),
             pokemon = pokemon,
             attributes = attributes,
             maxAttributeValue = maxAttributeValue

@@ -3,7 +3,6 @@ package pokemon.card
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 import pokemon.Pokemon
@@ -14,7 +13,7 @@ import reduce_and_conquer.composeapp.generated.resources.*
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 fun PokemonCardBack(modifier: Modifier, pokemon: Pokemon, attributes: List<Pokemon.Attribute>, maxAttributeValue: Int) {
-    PokemonCardCommon(modifier = modifier.graphicsLayer(rotationY = 180f), pokemon = pokemon) {
+    PokemonCardCommon(modifier = modifier, pokemon = pokemon) {
         PokemonAttributeChart(
             modifier = Modifier.fillMaxSize(),
             maxAttributeValue = maxAttributeValue,
