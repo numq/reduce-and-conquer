@@ -5,6 +5,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
 import androidx.compose.material.Card
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -38,7 +39,7 @@ fun PokemonCard(modifier: Modifier, pokemon: Pokemon, maxAttributeValue: Int) {
         )
     )
 
-    Card(modifier = Modifier.graphicsLayer {
+    Box(modifier = Modifier.graphicsLayer {
         rotationY = animatedRotation.value
         cameraDistance = 16f * density
     }.clickable(
@@ -46,13 +47,17 @@ fun PokemonCard(modifier: Modifier, pokemon: Pokemon, maxAttributeValue: Int) {
     ) {
         setCardSide(cardSide.flip())
     }) {
-        if (animatedRotation.value <= 90f) PokemonCardFront(
-            modifier = Modifier.then(modifier), pokemon = pokemon, bitmap = bitmap
-        ) else PokemonCardBack(
-            modifier = Modifier.graphicsLayer(rotationY = 180f).then(modifier),
-            pokemon = pokemon,
-            attributes = attributes,
-            maxAttributeValue = maxAttributeValue
-        )
+        if (animatedRotation.value <= 90f) Card {
+            PokemonCardFront(
+                modifier = Modifier.then(modifier), pokemon = pokemon, bitmap = bitmap
+            )
+        } else Card(modifier = Modifier.graphicsLayer(rotationY = 180f)) {
+            PokemonCardBack(
+                modifier = modifier,
+                pokemon = pokemon,
+                attributes = attributes,
+                maxAttributeValue = maxAttributeValue
+            )
+        }
     }
 }
