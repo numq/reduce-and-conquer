@@ -20,7 +20,7 @@ abstract class Feature<State, Message, Effect : feature.Effect<*>>(
 
     fun performEffect(effect: Effect) = _effects.trySend(effect).isSuccess
 
-    open suspend fun reduce(state: State, message: Message) = state
+    abstract suspend fun reduce(state: State, message: Message): State
 
     init {
         messages.receiveAsFlow().onEach { message ->
