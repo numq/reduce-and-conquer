@@ -11,7 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.filter
 import pokemon.Pokemon
-import pokemon.PokemonCard
+import pokemon.card.PokemonCard
 
 @Composable
 fun PokedexGrid(

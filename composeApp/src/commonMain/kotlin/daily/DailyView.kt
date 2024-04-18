@@ -23,7 +23,7 @@ import notification.Notification
 import notification.NotificationError
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
-import pokemon.PokemonCard
+import pokemon.card.PokemonCard
 import reduce_and_conquer.composeapp.generated.resources.Res
 import reduce_and_conquer.composeapp.generated.resources.daily_pokemon_of_the_day
 
