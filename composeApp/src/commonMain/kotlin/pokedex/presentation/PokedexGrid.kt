@@ -2,6 +2,7 @@ package pokedex.presentation
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -41,7 +42,7 @@ fun PokedexGrid(
     ) {
         items(pokemons, key = Pokemon::id) { pokemon ->
             PokemonCard(
-                modifier = Modifier.aspectRatio(.75f),
+                modifier = Modifier.aspectRatio(.75f).padding(8.dp),
                 pokemon = pokemon,
                 maxAttributeValue = maxAttributeValue
             )
