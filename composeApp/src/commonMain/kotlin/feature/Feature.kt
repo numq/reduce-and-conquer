@@ -6,13 +6,15 @@ import kotlinx.coroutines.flow.*
 abstract class Feature<State, Message, Effect : feature.Effect<*>>(
     initialState: State,
     coroutineScope: CoroutineScope,
+    messagesBufferCapacity: Int = Int.MAX_VALUE,
+    effectsBufferCapacity: Int = Int.MAX_VALUE,
 ) {
-    private val messages = MutableSharedFlow<Message>(extraBufferCapacity = Int.MAX_VALUE)
+    private val messages = MutableSharedFlow<Message>(extraBufferCapacity = messagesBufferCapacity)
 
     private val _state = MutableStateFlow(initialState)
     val state = _state.asStateFlow()
 
-    private val _effects = MutableSharedFlow<Effect>(extraBufferCapacity = Int.MAX_VALUE)
+    private val _effects = MutableSharedFlow<Effect>(extraBufferCapacity = effectsBufferCapacity)
     val effects = _effects.asSharedFlow()
 
     fun dispatchMessage(message: Message) = messages.tryEmit(message)
