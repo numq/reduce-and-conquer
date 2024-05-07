@@ -8,6 +8,7 @@ import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -31,8 +32,14 @@ import reduce_and_conquer.composeapp.generated.resources.daily_pokemon_of_the_da
 @Composable
 fun DailyView(feature: DailyFeature) {
     val state by feature.state.collectAsState()
-    val errors = feature.effects.filterIsInstance(DailyEffect.Error::class).map { error ->
+    val errors = feature.events.filterIsInstance(DailyEvent.Error::class).map { error ->
         Notification.Error(durationMillis = 3_000L, message = error.message)
+    }
+
+    LaunchedEffect(Unit) {
+        if (feature.execute(DailyCommand.GetMaxAttributeValue)) {
+            feature.execute(DailyCommand.GetDailyPokemon)
+        }
     }
 
     Box(

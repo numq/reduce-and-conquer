@@ -9,35 +9,41 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowUpward
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import notification.Notification
 import notification.NotificationError
 
 @Composable
 fun PokedexView(feature: PokedexFeature, gridState: LazyGridState) {
+    val coroutineScope = rememberCoroutineScope { Dispatchers.Default }
+
     val state by feature.state.collectAsState()
-    val errors = feature.effects.filterIsInstance(PokedexEffect.Error::class).map { error ->
+    val errors = feature.events.filterIsInstance(PokedexEvent.Error::class).map { error ->
         Notification.Error(
-            durationMillis = 3_000L,
-            message = error.message
+            durationMillis = 3_000L, message = error.message
         )
     }
 
     LaunchedEffect(Unit) {
-        feature.effects.collect { effect ->
-            when (effect) {
-                is PokedexEffect.ScrollToStart -> gridState.animateScrollToItem(0)
+        if (feature.execute(PokedexCommand.Pokemons.GetMaxAttributeValue)) {
+            if (feature.execute(PokedexCommand.Filter.InitializeFilters)) {
+                feature.execute(PokedexCommand.Sort.SortPokemons(state.sort))
+            }
+        }
 
-                is PokedexEffect.ResetScroll -> gridState.scrollToItem(0)
+        feature.events.collect { event ->
+            when (event) {
+                is PokedexEvent.ScrollToStart -> gridState.animateScrollToItem(0)
+
+                is PokedexEvent.ResetScroll -> gridState.scrollToItem(0)
 
                 else -> Unit
             }
@@ -47,7 +53,9 @@ fun PokedexView(feature: PokedexFeature, gridState: LazyGridState) {
     Scaffold(modifier = Modifier.fillMaxSize().background(MaterialTheme.colors.background), floatingActionButton = {
         AnimatedVisibility(gridState.firstVisibleItemIndex > 0, enter = fadeIn(), exit = fadeOut()) {
             FloatingActionButton(onClick = {
-                feature.performEffect(PokedexEffect.ScrollToStart())
+                coroutineScope.launch {
+                    feature.execute(PokedexCommand.Pokemons.ResetScroll)
+                }
             }, backgroundColor = MaterialTheme.colors.background) {
                 Icon(Icons.Default.ArrowUpward, null)
             }
@@ -66,28 +74,44 @@ fun PokedexView(feature: PokedexFeature, gridState: LazyGridState) {
                     isFiltered = state.isFiltered,
                     selectedFilter = state.selectedFilter,
                     toggleFilterMode = {
-                        feature.dispatchMessage(PokedexMessage.Filter.ToggleFilterMode)
+                        coroutineScope.launch {
+                            feature.execute(PokedexCommand.Filter.ToggleFilterMode)
+                        }
                     },
                     selectFilter = { criteria ->
-                        feature.dispatchMessage(PokedexMessage.Filter.SelectFilter(criteria))
+                        coroutineScope.launch {
+                            feature.execute(PokedexCommand.Filter.SelectFilter(criteria))
+                        }
                     },
                     updateFilter = { filter ->
-                        feature.dispatchMessage(PokedexMessage.Filter.UpdateFilter(filter))
+                        coroutineScope.launch {
+                            feature.execute(PokedexCommand.Filter.UpdateFilter(filter))
+                        }
                     },
                     resetFilter = { criteria ->
-                        feature.dispatchMessage(PokedexMessage.Filter.ResetFilter(criteria))
+                        coroutineScope.launch {
+                            feature.execute(PokedexCommand.Filter.ResetFilter(criteria))
+                        }
                     },
                     closeFilter = {
-                        feature.dispatchMessage(PokedexMessage.Filter.CloseFilter)
+                        coroutineScope.launch {
+                            feature.execute(PokedexCommand.Filter.CloseFilter)
+                        }
                     },
                     resetFilters = {
-                        feature.dispatchMessage(PokedexMessage.Filter.ResetFilters)
+                        coroutineScope.launch {
+                            feature.execute(PokedexCommand.Filter.ResetFilters)
+                        }
                     },
                     toggleSortMode = {
-                        feature.dispatchMessage(PokedexMessage.Sort.ToggleSortMode)
+                        coroutineScope.launch {
+                            feature.execute(PokedexCommand.Sort.ToggleSortMode)
+                        }
                     },
                     sortPokemons = { sort ->
-                        feature.dispatchMessage(PokedexMessage.Sort.SortPokemons(sort))
+                        coroutineScope.launch {
+                            feature.execute(PokedexCommand.Sort.SortPokemons(sort))
+                        }
                     })
                 AnimatedVisibility(
                     visible = state.maxAttributeValue != null && state.pokemons.isNotEmpty(),
@@ -95,13 +119,15 @@ fun PokedexView(feature: PokedexFeature, gridState: LazyGridState) {
                     exit = fadeOut()
                 ) {
                     state.maxAttributeValue?.let { maxAttributeValue ->
-                        PokedexGrid(
-                            modifier = Modifier.fillMaxSize().padding(8.dp),
+                        PokedexGrid(modifier = Modifier.fillMaxSize().padding(8.dp),
                             gridState = gridState,
                             maxAttributeValue = maxAttributeValue,
                             pokemons = state.pokemons,
-                            loadMore = { feature.dispatchMessage(PokedexMessage.Pokemons.LoadMorePokemons) }
-                        )
+                            loadMore = {
+                                coroutineScope.launch {
+                                    feature.execute(PokedexCommand.Pokemons.LoadMorePokemons)
+                                }
+                            })
                     }
                 }
             }

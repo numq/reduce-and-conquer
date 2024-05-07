@@ -2,10 +2,10 @@ package pokedex.presentation
 
 import com.benasher44.uuid.Uuid
 import com.benasher44.uuid.uuid4
-import feature.Effect
+import event.Event
 
-sealed interface PokedexEffect : Effect<Uuid> {
-    sealed class Error(val message: String, override val key: Uuid = uuid4()) : PokedexEffect {
+sealed interface PokedexEvent : Event<Uuid> {
+    sealed class Error(val message: String, override val key: Uuid = uuid4()) : PokedexEvent {
         data class GetMaxAttributeValue(override val key: Uuid = uuid4()) : Error("Unable to get max attribute value")
         data class GetPokemons(override val key: Uuid = uuid4()) : Error("Unable to get pokemons")
         data class LoadMore(override val key: Uuid = uuid4()) : Error("Unable to load more")
@@ -17,7 +17,7 @@ sealed interface PokedexEffect : Effect<Uuid> {
         data class UnableToSelectSort(override val key: Uuid = uuid4()) : Error("Unable to select sort")
     }
 
-    data class ScrollToStart(override val key: Uuid = uuid4()) : PokedexEffect
+    data class ScrollToStart(override val key: Uuid = uuid4()) : PokedexEvent
 
-    data class ResetScroll(override val key: Uuid = uuid4()) : PokedexEffect
+    data class ResetScroll(override val key: Uuid = uuid4()) : PokedexEvent
 }

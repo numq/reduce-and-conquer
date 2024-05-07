@@ -1,17 +1,19 @@
 package di
 
 import daily.DailyFeature
+import daily.DailyReducer
 import daily.GetDailyPokemon
 import daily.GetMaxAttributeValue
 import file.FileProvider
 import kotlinx.serialization.json.Json
 import navigation.NavigationFeature
+import navigation.NavigationReducer
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import pokedex.GetPokemons
 import pokedex.PokedexRepository
 import pokedex.filter.*
-import pokedex.presentation.PokedexFeature
+import pokedex.presentation.*
 import pokedex.sort.ChangeSort
 import pokemon.PokemonRepository
 import pokemon.PokemonService
@@ -27,13 +29,15 @@ private val pokemon = module {
 }
 
 private val navigation = module {
-    single { NavigationFeature() }
+    single { NavigationReducer() }
+    single { NavigationFeature(reducer = get()) }
 }
 
 private val daily = module {
     factory { GetMaxAttributeValue(get()) }
     factory { GetDailyPokemon(get()) }
-    single { DailyFeature(get(), get()) }
+    single { DailyReducer(get(), get()) }
+    single { DailyFeature(reducer = get()) }
 }
 
 private val pokedex = module {
@@ -46,7 +50,11 @@ private val pokedex = module {
     factory { ResetFilter(get()) }
     factory { ResetFilters(get()) }
     factory { ChangeSort(get()) }
-    single { PokedexFeature(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    single { PokedexReducer(get(), get(), get()) }
+    single { PokemonsReducer(get(), get(), get()) }
+    single { FilterReducer(get(), get(), get(), get(), get(), get(), get()) }
+    single { SortReducer(get(), get()) }
+    single { PokedexFeature(get()) }
 }
 
 internal val appModule = listOf(application, pokemon, navigation, daily, pokedex)

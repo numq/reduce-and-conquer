@@ -14,14 +14,19 @@ import androidx.compose.material.icons.filled.Today
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import daily.DailyView
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import pokedex.presentation.PokedexView
 
 @Composable
 fun NavigationView(feature: NavigationFeature) {
+    val coroutineScope = rememberCoroutineScope { Dispatchers.Default }
+
     val state by feature.state.collectAsState()
 
     val pokedexGridState = rememberLazyGridState()
@@ -45,12 +50,16 @@ fun NavigationView(feature: NavigationFeature) {
         }
         BottomNavigation(modifier = Modifier.fillMaxWidth()) {
             BottomNavigationItem(selected = state is NavigationState.Daily, onClick = {
-                feature.dispatchMessage(NavigationMessage.NavigateToDaily)
+                coroutineScope.launch {
+                    feature.execute(NavigationCommand.NavigateToDaily)
+                }
             }, icon = {
                 Icon(Icons.Default.Today, null)
             })
             BottomNavigationItem(selected = state is NavigationState.Pokedex, onClick = {
-                feature.dispatchMessage(NavigationMessage.NavigateToPokedex)
+                coroutineScope.launch {
+                    feature.execute(NavigationCommand.NavigateToPokedex)
+                }
             }, icon = {
                 Icon(Icons.Default.GridView, null)
             })
