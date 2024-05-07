@@ -1,31 +1,28 @@
 package feature
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 
-abstract class Feature<State, Message, Effect : feature.Effect<*>>(
+abstract class Feature<in Command, out State, Event>(
     initialState: State,
-    coroutineScope: CoroutineScope,
-    messagesBufferCapacity: Int = Int.MAX_VALUE,
-    effectsBufferCapacity: Int = Int.MAX_VALUE,
+    private val reducer: Reducer<Command, State, Event>,
 ) {
-    private val messages = MutableSharedFlow<Message>(extraBufferCapacity = messagesBufferCapacity)
-
     private val _state = MutableStateFlow(initialState)
     val state = _state.asStateFlow()
 
-    private val _effects = MutableSharedFlow<Effect>(extraBufferCapacity = effectsBufferCapacity)
-    val effects = _effects.asSharedFlow()
+    private val _events = MutableSharedFlow<Event>()
+    val events = _events.asSharedFlow()
 
-    fun dispatchMessage(message: Message) = messages.tryEmit(message)
+    suspend fun trigger(event: Event) = runCatching {
+        _events.emit(event)
+    }.isSuccess
 
-    fun performEffect(effect: Effect) = _effects.tryEmit(effect)
-
-    abstract suspend fun reduce(state: State, message: Message): State
-
-    init {
-        messages.onEach { message ->
-            _state.value = reduce(_state.value, message)
-        }.launchIn(coroutineScope)
-    }
+    suspend fun execute(command: Command) = runCatching {
+        reducer.reduce(state.value, command).let { (state, event) ->
+            _state.emit(state)
+            event?.run { _events.emit(this) }
+        }
+    }.isSuccess
 }
