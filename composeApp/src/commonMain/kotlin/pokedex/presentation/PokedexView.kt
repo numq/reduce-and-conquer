@@ -32,7 +32,7 @@ fun PokedexView(feature: PokedexFeature, gridState: LazyGridState) {
         )
     }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(feature) {
         if (feature.execute(PokedexCommand.Pokemons.GetMaxAttributeValue)) {
             if (feature.execute(PokedexCommand.Filter.InitializeFilters)) {
                 feature.execute(PokedexCommand.Sort.SortPokemons(state.sort))

@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.filter
 import pokemon.Pokemon
 import pokemon.card.PokemonCard
+import pokemon.card.PokemonCardSide
 
 @Composable
 fun PokedexGrid(
@@ -41,10 +42,13 @@ fun PokedexGrid(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(pokemons, key = Pokemon::id) { pokemon ->
+            val (cardSide, setCardSide) = remember { mutableStateOf<PokemonCardSide>(PokemonCardSide.Front) }
             PokemonCard(
                 modifier = Modifier.aspectRatio(.75f).padding(8.dp),
                 pokemon = pokemon,
-                maxAttributeValue = maxAttributeValue
+                maxAttributeValue = maxAttributeValue,
+                cardSide = cardSide,
+                setCardSide = setCardSide
             )
         }
     }
