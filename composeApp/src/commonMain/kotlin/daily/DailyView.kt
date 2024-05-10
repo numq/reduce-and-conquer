@@ -7,10 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -20,6 +17,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import notification.Notification
 import notification.NotificationError
 import org.jetbrains.compose.resources.ExperimentalResourceApi
@@ -31,12 +29,14 @@ import reduce_and_conquer.composeapp.generated.resources.daily_pokemon_of_the_da
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 fun DailyView(feature: DailyFeature) {
+    val coroutineScope = rememberCoroutineScope()
+
     val state by feature.state.collectAsState()
     val errors = feature.events.filterIsInstance(DailyEvent.Error::class).map { error ->
         Notification.Error(durationMillis = 3_000L, message = error.message)
     }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(feature) {
         if (feature.execute(DailyCommand.GetMaxAttributeValue)) {
             feature.execute(DailyCommand.GetDailyPokemon)
         }
@@ -59,24 +59,24 @@ fun DailyView(feature: DailyFeature) {
             )
             Box(modifier = Modifier.weight(1f).zIndex(-1f), contentAlignment = Alignment.Center) {
                 androidx.compose.animation.AnimatedVisibility(
-                    state.maxAttributeValue == null || state.pokemon == null,
-                    enter = fadeIn(),
-                    exit = fadeOut()
+                    state.maxAttributeValue == null || state.pokemon == null, enter = fadeIn(), exit = fadeOut()
                 ) {
                     CircularProgressIndicator()
                 }
                 androidx.compose.animation.AnimatedVisibility(
-                    state.maxAttributeValue != null && state.pokemon != null,
-                    enter = fadeIn(),
-                    exit = fadeOut()
+                    state.maxAttributeValue != null && state.pokemon != null, enter = fadeIn(), exit = fadeOut()
                 ) {
                     state.maxAttributeValue?.let { maxAttributeValue ->
                         state.pokemon?.let { pokemon ->
-                            PokemonCard(
-                                modifier = Modifier.aspectRatio(.75f).padding(8.dp),
+                            PokemonCard(modifier = Modifier.aspectRatio(.75f).padding(8.dp),
                                 pokemon = pokemon,
-                                maxAttributeValue = maxAttributeValue
-                            )
+                                maxAttributeValue = maxAttributeValue,
+                                cardSide = state.cardSide,
+                                setCardSide = { cardSide ->
+                                    coroutineScope.launch {
+                                        feature.execute(DailyCommand.FlipCard(cardSide = cardSide))
+                                    }
+                                })
                         }
                     }
                 }

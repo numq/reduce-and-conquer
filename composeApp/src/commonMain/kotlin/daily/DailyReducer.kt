@@ -19,5 +19,7 @@ class DailyReducer(
         }, onFailure = {
             transition(state, DailyEvent.Error(it.message))
         })
+
+        is DailyCommand.FlipCard -> transition(state.copy(cardSide = command.cardSide))
     }
 }
