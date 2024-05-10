@@ -8,7 +8,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material.Card
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -16,7 +15,13 @@ import image.ImageLoader
 import pokemon.Pokemon
 
 @Composable
-fun PokemonCard(modifier: Modifier, pokemon: Pokemon, maxAttributeValue: Int) {
+fun PokemonCard(
+    modifier: Modifier,
+    pokemon: Pokemon,
+    maxAttributeValue: Int,
+    cardSide: PokemonCardSide,
+    setCardSide: (PokemonCardSide) -> Unit,
+) {
     val attributes = remember(pokemon.attributes) {
         listOf(
             pokemon.attributes.specialAttack,
@@ -29,8 +34,6 @@ fun PokemonCard(modifier: Modifier, pokemon: Pokemon, maxAttributeValue: Int) {
     }
 
     val bitmap = remember(pokemon) { pokemon.imageBytes?.let { ImageLoader.loadBitmap(it) } }
-
-    val (cardSide, setCardSide) = remember { mutableStateOf<PokemonCardSide>(PokemonCardSide.Front) }
 
     val animatedRotation = animateFloatAsState(
         targetValue = cardSide.angle, animationSpec = tween(
@@ -53,10 +56,7 @@ fun PokemonCard(modifier: Modifier, pokemon: Pokemon, maxAttributeValue: Int) {
             )
         } else Card(modifier = Modifier.graphicsLayer(rotationY = 180f)) {
             PokemonCardBack(
-                modifier = modifier,
-                pokemon = pokemon,
-                attributes = attributes,
-                maxAttributeValue = maxAttributeValue
+                modifier = modifier, pokemon = pokemon, attributes = attributes, maxAttributeValue = maxAttributeValue
             )
         }
     }
