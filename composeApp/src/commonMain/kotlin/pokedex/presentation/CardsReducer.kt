@@ -3,7 +3,6 @@ package pokedex.presentation
 import card.FlippableCard
 import daily.GetMaxAttributeValue
 import feature.Reducer
-import feature.transition
 import pokedex.GetPokemons
 import pokedex.filter.GetFilters
 import pokedex.filter.PokedexFilter
@@ -27,7 +26,7 @@ class CardsReducer(
         }.fold(onSuccess = { (filters, cards) ->
             transition(
                 state.copy(
-                    cards = cards,
+                    cards = cards.map { card -> state.cards.find { it.item.id == card.item.id } ?: card },
                     isFiltered = filters.filterNot { filter ->
                         filter.criteria == PokedexFilter.Criteria.NAME
                     }.any(PokedexFilter::isModified)

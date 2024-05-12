@@ -20,12 +20,14 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import notification.Notification
 import notification.NotificationError
+import org.koin.compose.koinInject
 
 @Composable
-fun PokedexView(feature: PokedexFeature, gridState: LazyGridState) {
+fun PokedexView(feature: PokedexFeature = koinInject(), gridState: LazyGridState) {
     val coroutineScope = rememberCoroutineScope { Dispatchers.Default }
 
     val state by feature.state.collectAsState()
+
     val errors = feature.events.filterIsInstance(PokedexEvent.Error::class).map { error ->
         Notification.Error(
             durationMillis = 3_000L, message = error.message
@@ -33,12 +35,6 @@ fun PokedexView(feature: PokedexFeature, gridState: LazyGridState) {
     }
 
     LaunchedEffect(feature) {
-        if (feature.execute(PokedexCommand.Cards.GetMaxAttributeValue)) {
-            if (feature.execute(PokedexCommand.Filter.InitializeFilters)) {
-                feature.execute(PokedexCommand.Sort.SortPokemons(state.sort))
-            }
-        }
-
         feature.events.collect { event ->
             when (event) {
                 is PokedexEvent.ScrollToStart -> gridState.animateScrollToItem(0)

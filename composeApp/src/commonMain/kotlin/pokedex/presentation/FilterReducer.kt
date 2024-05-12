@@ -1,7 +1,6 @@
 package pokedex.presentation
 
 import feature.Reducer
-import feature.transition
 import pokedex.filter.*
 
 class FilterReducer(

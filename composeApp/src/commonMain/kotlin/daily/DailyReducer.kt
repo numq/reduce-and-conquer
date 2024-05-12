@@ -2,7 +2,6 @@ package daily
 
 import card.FlippableCard
 import feature.Reducer
-import feature.transition
 
 class DailyReducer(
     private val getMaxAttributeValue: GetMaxAttributeValue,
