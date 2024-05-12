@@ -10,18 +10,19 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import card.FlippableCard
 import kotlinx.coroutines.flow.filter
 import pokemon.Pokemon
 import pokemon.card.PokemonCard
-import pokemon.card.PokemonCardSide
 
 @Composable
 fun PokedexGrid(
     modifier: Modifier,
     gridState: LazyGridState,
     maxAttributeValue: Int,
-    pokemons: List<Pokemon>,
+    cards: List<FlippableCard<Pokemon>>,
     loadMore: () -> Unit,
+    flip: (FlippableCard<Pokemon>) -> Unit,
 ) {
     val shouldLoadMore by remember(gridState.layoutInfo.totalItemsCount) {
         derivedStateOf {
@@ -41,14 +42,14 @@ fun PokedexGrid(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        items(pokemons, key = Pokemon::id) { pokemon ->
-            val (cardSide, setCardSide) = remember { mutableStateOf<PokemonCardSide>(PokemonCardSide.Front) }
+        items(cards, key = { card -> card.item.id }) { card ->
             PokemonCard(
                 modifier = Modifier.aspectRatio(.75f).padding(8.dp),
-                pokemon = pokemon,
+                card = card,
                 maxAttributeValue = maxAttributeValue,
-                cardSide = cardSide,
-                setCardSide = setCardSide
+                flip = {
+                    flip(card)
+                }
             )
         }
     }

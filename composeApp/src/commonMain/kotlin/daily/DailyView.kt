@@ -59,24 +59,25 @@ fun DailyView(feature: DailyFeature) {
             )
             Box(modifier = Modifier.weight(1f).zIndex(-1f), contentAlignment = Alignment.Center) {
                 androidx.compose.animation.AnimatedVisibility(
-                    state.maxAttributeValue == null || state.pokemon == null, enter = fadeIn(), exit = fadeOut()
+                    state.maxAttributeValue == null || state.card == null, enter = fadeIn(), exit = fadeOut()
                 ) {
                     CircularProgressIndicator()
                 }
                 androidx.compose.animation.AnimatedVisibility(
-                    state.maxAttributeValue != null && state.pokemon != null, enter = fadeIn(), exit = fadeOut()
+                    state.maxAttributeValue != null && state.card != null, enter = fadeIn(), exit = fadeOut()
                 ) {
                     state.maxAttributeValue?.let { maxAttributeValue ->
-                        state.pokemon?.let { pokemon ->
-                            PokemonCard(modifier = Modifier.aspectRatio(.75f).padding(8.dp),
-                                pokemon = pokemon,
+                        state.card?.let { card ->
+                            PokemonCard(
+                                modifier = Modifier.aspectRatio(.75f).padding(8.dp),
+                                card = card,
                                 maxAttributeValue = maxAttributeValue,
-                                cardSide = state.cardSide,
-                                setCardSide = { cardSide ->
+                                flip = {
                                     coroutineScope.launch {
-                                        feature.execute(DailyCommand.FlipCard(cardSide = cardSide))
+                                        feature.execute(DailyCommand.FlipCard)
                                     }
-                                })
+                                }
+                            )
                         }
                     }
                 }

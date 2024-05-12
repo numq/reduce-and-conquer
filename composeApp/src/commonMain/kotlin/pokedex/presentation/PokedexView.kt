@@ -33,7 +33,7 @@ fun PokedexView(feature: PokedexFeature, gridState: LazyGridState) {
     }
 
     LaunchedEffect(feature) {
-        if (feature.execute(PokedexCommand.Pokemons.GetMaxAttributeValue)) {
+        if (feature.execute(PokedexCommand.Cards.GetMaxAttributeValue)) {
             if (feature.execute(PokedexCommand.Filter.InitializeFilters)) {
                 feature.execute(PokedexCommand.Sort.SortPokemons(state.sort))
             }
@@ -54,7 +54,7 @@ fun PokedexView(feature: PokedexFeature, gridState: LazyGridState) {
         AnimatedVisibility(gridState.firstVisibleItemIndex > 0, enter = fadeIn(), exit = fadeOut()) {
             FloatingActionButton(onClick = {
                 coroutineScope.launch {
-                    feature.execute(PokedexCommand.Pokemons.ResetScroll)
+                    feature.execute(PokedexCommand.Cards.ResetScroll)
                 }
             }, backgroundColor = MaterialTheme.colors.background) {
                 Icon(Icons.Default.ArrowUpward, null)
@@ -114,7 +114,7 @@ fun PokedexView(feature: PokedexFeature, gridState: LazyGridState) {
                         }
                     })
                 AnimatedVisibility(
-                    visible = state.maxAttributeValue != null && state.pokemons.isNotEmpty(),
+                    visible = state.maxAttributeValue != null && state.cards.isNotEmpty(),
                     enter = fadeIn(),
                     exit = fadeOut()
                 ) {
@@ -122,16 +122,21 @@ fun PokedexView(feature: PokedexFeature, gridState: LazyGridState) {
                         PokedexGrid(modifier = Modifier.fillMaxSize().padding(8.dp),
                             gridState = gridState,
                             maxAttributeValue = maxAttributeValue,
-                            pokemons = state.pokemons,
+                            cards = state.cards,
                             loadMore = {
                                 coroutineScope.launch {
-                                    feature.execute(PokedexCommand.Pokemons.LoadMorePokemons)
+                                    feature.execute(PokedexCommand.Cards.LoadMoreCards)
+                                }
+                            },
+                            flip = { card ->
+                                coroutineScope.launch {
+                                    feature.execute(PokedexCommand.Cards.FlipCard(card = card))
                                 }
                             })
                     }
                 }
             }
-            AnimatedVisibility(visible = state.pokemons.isEmpty(), enter = fadeIn(), exit = fadeOut()) {
+            AnimatedVisibility(visible = state.cards.isEmpty(), enter = fadeIn(), exit = fadeOut()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text("No Pokémon found", textAlign = TextAlign.Center)
                 }

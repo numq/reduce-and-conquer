@@ -1,14 +1,17 @@
 package pokedex.presentation
 
+import card.FlippableCard
 import pokedex.filter.PokedexFilter
 import pokedex.sort.PokedexSort
+import pokemon.Pokemon
 
 sealed interface PokedexCommand {
-    sealed interface Pokemons : PokedexCommand {
-        data object GetMaxAttributeValue : Pokemons
-        data class GetPokemons(val skip: Long, val limit: Long) : Pokemons
-        data object LoadMorePokemons : Pokemons
-        data object ResetScroll : Pokemons
+    sealed interface Cards : PokedexCommand {
+        data object GetMaxAttributeValue : Cards
+        data class GetCards(val skip: Long, val limit: Long) : Cards
+        data object LoadMoreCards : Cards
+        data class FlipCard(val card: FlippableCard<Pokemon>) : Cards
+        data object ResetScroll : Cards
     }
 
     sealed interface Filter : PokedexCommand {

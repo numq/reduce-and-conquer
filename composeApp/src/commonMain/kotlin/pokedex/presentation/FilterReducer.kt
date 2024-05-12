@@ -5,7 +5,7 @@ import feature.transition
 import pokedex.filter.*
 
 class FilterReducer(
-    private val pokemonsReducer: PokemonsReducer,
+    private val cardsReducer: CardsReducer,
     private val initializeFilters: InitializeFilters,
     private val getFilters: GetFilters,
     private val selectFilter: SelectFilter,
@@ -36,7 +36,7 @@ class FilterReducer(
 
         is PokedexCommand.Filter.UpdateFilter -> updateFilter.execute(command.filter)
             .fold(onSuccess = { updatedFilter ->
-                pokemonsReducer.reduce(
+                cardsReducer.reduce(
                     state.copy(
                         filters = state.filters.map { filter ->
                             if (filter.criteria == updatedFilter.criteria) updatedFilter else filter
@@ -45,7 +45,7 @@ class FilterReducer(
                             PokedexFilter::isModified
                         ) else updatedFilter
                     ),
-                    PokedexCommand.Pokemons.GetPokemons(
+                    PokedexCommand.Cards.GetCards(
                         skip = 0,
                         limit = PokedexConstants.DEFAULT_LIMIT
                     )
@@ -56,14 +56,14 @@ class FilterReducer(
 
         is PokedexCommand.Filter.ResetFilter -> if (state.isFiltered) {
             resetFilter.execute(command.criteria).fold(onSuccess = { updatedFilter ->
-                pokemonsReducer.reduce(
+                cardsReducer.reduce(
                     state.copy(
                         filters = state.filters.map { filter ->
                             if (updatedFilter.criteria == filter.criteria) updatedFilter else filter
                         },
                         selectedFilter = updatedFilter
                     ),
-                    PokedexCommand.Pokemons.GetPokemons(skip = 0, limit = PokedexConstants.DEFAULT_LIMIT)
+                    PokedexCommand.Cards.GetCards(skip = 0, limit = PokedexConstants.DEFAULT_LIMIT)
                 )
             }, onFailure = {
                 transition(state, PokedexEvent.Error.UnableToResetFilter())
@@ -76,12 +76,12 @@ class FilterReducer(
             resetFilters.execute(Unit).mapCatching {
                 getFilters.execute(Unit).getOrThrow()
             }.fold(onSuccess = { filters ->
-                pokemonsReducer.reduce(
+                cardsReducer.reduce(
                     state.copy(
                         filters = filters,
                         selectedFilter = filters.find { filter -> filter.criteria == state.selectedFilter?.criteria }
                     ),
-                    PokedexCommand.Pokemons.GetPokemons(skip = 0, limit = PokedexConstants.DEFAULT_LIMIT)
+                    PokedexCommand.Cards.GetCards(skip = 0, limit = PokedexConstants.DEFAULT_LIMIT)
                 )
             }, onFailure = {
                 transition(state, PokedexEvent.Error.UnableToResetFilters())

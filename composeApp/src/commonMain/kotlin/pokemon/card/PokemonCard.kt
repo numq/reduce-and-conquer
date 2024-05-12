@@ -11,17 +11,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import card.FlippableCard
 import image.ImageLoader
 import pokemon.Pokemon
 
 @Composable
 fun PokemonCard(
     modifier: Modifier,
-    pokemon: Pokemon,
+    card: FlippableCard<Pokemon>,
     maxAttributeValue: Int,
-    cardSide: PokemonCardSide,
-    setCardSide: (PokemonCardSide) -> Unit,
+    flip: () -> Unit,
 ) {
+    val pokemon = card.item
+
+    val side = card.side
+
     val attributes = remember(pokemon.attributes) {
         listOf(
             pokemon.attributes.specialAttack,
@@ -36,7 +40,7 @@ fun PokemonCard(
     val bitmap = remember(pokemon) { pokemon.imageBytes?.let { ImageLoader.loadBitmap(it) } }
 
     val animatedRotation = animateFloatAsState(
-        targetValue = cardSide.angle, animationSpec = tween(
+        targetValue = side.angle, animationSpec = tween(
             durationMillis = 500,
             easing = FastOutSlowInEasing,
         )
@@ -48,7 +52,7 @@ fun PokemonCard(
     }.clickable(
         interactionSource = MutableInteractionSource(), indication = null
     ) {
-        setCardSide(cardSide.flip())
+        flip()
     }) {
         if (animatedRotation.value <= 90f) Card {
             PokemonCardFront(

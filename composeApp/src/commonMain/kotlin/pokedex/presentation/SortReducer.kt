@@ -5,7 +5,7 @@ import feature.transition
 import pokedex.sort.ChangeSort
 
 class SortReducer(
-    private val pokemonsReducer: PokemonsReducer,
+    private val cardsReducer: CardsReducer,
     private val changeSort: ChangeSort,
 ) : Reducer<PokedexCommand.Sort, PokedexState, PokedexEvent> {
     override suspend fun reduce(state: PokedexState, command: PokedexCommand.Sort) = when (command) {
@@ -16,9 +16,9 @@ class SortReducer(
         )
 
         is PokedexCommand.Sort.SortPokemons -> changeSort.execute(command.sort).fold(onSuccess = {
-            pokemonsReducer.reduce(
+            cardsReducer.reduce(
                 state.copy(sort = command.sort),
-                PokedexCommand.Pokemons.GetPokemons(
+                PokedexCommand.Cards.GetCards(
                     skip = 0,
                     limit = PokedexConstants.DEFAULT_LIMIT
                 )

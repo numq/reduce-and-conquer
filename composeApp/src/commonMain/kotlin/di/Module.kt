@@ -51,7 +51,7 @@ private val pokedex = module {
     factory { ResetFilters(get()) }
     factory { ChangeSort(get()) }
     single { PokedexReducer(get(), get(), get()) }
-    single { PokemonsReducer(get(), get(), get()) }
+    single { CardsReducer(get(), get(), get()) }
     single { FilterReducer(get(), get(), get(), get(), get(), get(), get()) }
     single { SortReducer(get(), get()) }
     single { PokedexFeature(get()) }

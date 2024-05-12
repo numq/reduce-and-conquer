@@ -1,5 +1,6 @@
 package daily
 
+import card.FlippableCard
 import feature.Reducer
 import feature.transition
 
@@ -15,11 +16,11 @@ class DailyReducer(
         })
 
         is DailyCommand.GetDailyPokemon -> getDailyPokemon.execute(Unit).fold(onSuccess = { pokemon ->
-            transition(state.copy(pokemon = pokemon))
+            transition(state.copy(card = FlippableCard(item = pokemon)))
         }, onFailure = {
             transition(state, DailyEvent.Error(it.message))
         })
 
-        is DailyCommand.FlipCard -> transition(state.copy(cardSide = command.cardSide))
+        is DailyCommand.FlipCard -> transition(state.copy(card = state.card?.flip()))
     }
 }
