@@ -7,10 +7,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -19,10 +18,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import notification.Notification
 import notification.NotificationError
+import notification.queue.rememberNotificationQueue
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -35,10 +33,14 @@ import reduce_and_conquer.composeapp.generated.resources.daily_pokemon_of_the_da
 fun DailyView(feature: DailyFeature = koinInject()) {
     val coroutineScope = rememberCoroutineScope()
 
+    val notificationQueue = rememberNotificationQueue()
+
     val state by feature.state.collectAsState()
 
-    val errors = feature.events.filterIsInstance(DailyEvent.Error::class).map { error ->
-        Notification.Error(durationMillis = 3_000L, message = error.message)
+    LaunchedEffect(feature) {
+        feature.events.filterIsInstance(DailyEvent.Error::class).collect { error ->
+            notificationQueue.push(message = error.message, label = Icons.Default.ErrorOutline)
+        }
     }
 
     Box(
@@ -82,6 +84,6 @@ fun DailyView(feature: DailyFeature = koinInject()) {
                 }
             }
         }
-        NotificationError(errors)
+        NotificationError(notificationQueue = notificationQueue)
     }
 }

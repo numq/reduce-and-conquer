@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -16,22 +17,23 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import notification.Notification
 import notification.NotificationError
+import notification.queue.rememberNotificationQueue
 import org.koin.compose.koinInject
 
 @Composable
 fun PokedexView(feature: PokedexFeature = koinInject(), gridState: LazyGridState) {
     val coroutineScope = rememberCoroutineScope { Dispatchers.Default }
 
+    val notificationQueue = rememberNotificationQueue()
+
     val state by feature.state.collectAsState()
 
-    val errors = feature.events.filterIsInstance(PokedexEvent.Error::class).map { error ->
-        Notification.Error(
-            durationMillis = 3_000L, message = error.message
-        )
+    LaunchedEffect(feature) {
+        feature.events.filterIsInstance(PokedexEvent.Error::class).collect { error ->
+            notificationQueue.push(message = error.message, label = Icons.Default.ErrorOutline)
+        }
     }
 
     LaunchedEffect(feature) {
@@ -137,7 +139,7 @@ fun PokedexView(feature: PokedexFeature = koinInject(), gridState: LazyGridState
                     Text("No Pokémon found", textAlign = TextAlign.Center)
                 }
             }
-            NotificationError(errors)
+            NotificationError(notificationQueue = notificationQueue)
         }
     }
 }
