@@ -13,9 +13,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
-import reduce_and_conquer.composeapp.generated.resources.Res
-import reduce_and_conquer.composeapp.generated.resources.filter_cancel
-import reduce_and_conquer.composeapp.generated.resources.filter_reset
+import reduce_and_conquer.composeapp.generated.resources.*
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
@@ -49,7 +47,28 @@ fun FilterInteraction(
                 enabled = isFiltered,
                 modifier = Modifier.weight(.5f)
             ) {
-                Text(stringResource(Res.string.filter_reset), fontWeight = FontWeight.SemiBold)
+                Text(
+                    stringResource(Res.string.filter_reset).plus(" ").plus(
+                        when (selectedFilter?.criteria) {
+                            PokedexFilter.Criteria.TYPE -> stringResource(Res.string.filter_type)
+
+                            PokedexFilter.Criteria.HP -> stringResource(Res.string.filter_hp)
+
+                            PokedexFilter.Criteria.SPEED -> stringResource(Res.string.filter_speed)
+
+                            PokedexFilter.Criteria.BASIC_ATTACK -> stringResource(Res.string.filter_basic_attack)
+
+                            PokedexFilter.Criteria.BASIC_DEFENSE -> stringResource(Res.string.filter_basic_defense)
+
+                            PokedexFilter.Criteria.SPECIAL_ATTACK -> stringResource(Res.string.filter_special_attack)
+
+                            PokedexFilter.Criteria.SPECIAL_DEFENSE -> stringResource(Res.string.filter_special_defense)
+
+                            else -> " "
+                        }.lowercase().trim()
+                    ),
+                    fontWeight = FontWeight.SemiBold
+                )
             }
             if (selectedFilter != null) {
                 Button(onClick = { closeFilter() }, modifier = Modifier.weight(.5f)) {
