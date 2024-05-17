@@ -1,81 +1,61 @@
 package feature
 
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import kotlinx.datetime.Clock
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
+import kotlinx.coroutines.test.setMain
+import kotlin.test.*
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class FeatureTest {
+    private val testDispatcher = StandardTestDispatcher()
+
+    private lateinit var feature: Feature<TestCommand, TestState, TestEvent>
+
+    private val events = mutableListOf<TestEvent>()
+
+    @BeforeTest
+    fun setUp() {
+        Dispatchers.setMain(testDispatcher)
+
+        feature = object : Feature<TestCommand, TestState, TestEvent>(TestState(0), TestReducer()) {
+
+        }
+
+        feature.events.onEach(events::add).launchIn(CoroutineScope(testDispatcher))
+    }
+
+    @AfterTest
+    fun tearDown() {
+        Dispatchers.resetMain()
+
+        events.clear()
+    }
+
     @Test
-    fun shouldReduceState() = runTest {
-        // State
-        val initialState = 0
+    fun updateStateAndEmitEvent() = runTest {
+        assertEquals(0, feature.state.value.count)
 
-        // Messages
-        val addNumberMessage = "add number"
-        val subtractNumberMessage = "subtract number"
+        feature.execute(TestCommand.Increment)
 
-        // Effects
-        val zeroNumberEffect = object : Effect<Long> {
-            override val key = Clock.System.now().toEpochMilliseconds()
-        }
-        val negativeNumberEffect = object : Effect<Long> {
-            override val key = Clock.System.now().toEpochMilliseconds()
-        }
+        assertEquals(1, feature.state.value.count)
 
-        // Feature that allows you to add or subtract positive numbers
-        val feature = object : Feature<Int, Pair<String, Int>, Effect<Long>>(initialState, backgroundScope) {
-            private fun isValid(number: Int): Boolean {
-                when {
-                    number == 0 -> performEffect(zeroNumberEffect)
+        assertEquals(TestEvent.Incremented, events.last())
 
-                    number < 0 -> performEffect(negativeNumberEffect)
+        feature.execute(TestCommand.Decrement)
 
-                    else -> return true
-                }
-                return false
-            }
+        assertEquals(0, feature.state.value.count)
 
-            override suspend fun reduce(state: Int, message: Pair<String, Int>) = when (message.first) {
-                addNumberMessage -> if (isValid(message.second)) state + message.second else state
+        assertEquals(TestEvent.Decremented, events.last())
+    }
 
-                subtractNumberMessage -> if (isValid(message.second)) state - message.second else state
-
-                else -> state
-            }
-        }
-
-        val states = mutableListOf<Int>()
-        feature.state.onEach { state ->
-            states.add(state)
-        }.launchIn(backgroundScope)
-
-        val effects = mutableListOf<Effect<Long>>()
-        feature.effects.onEach { effect ->
-            effects.add(effect)
-        }.launchIn(backgroundScope)
-
-        assertEquals(initialState, feature.state.value)
-
-        delay(100L)
-
-        val messages = listOf(
-            addNumberMessage to 10,
-            subtractNumberMessage to 5,
-            addNumberMessage to 0,
-            subtractNumberMessage to -1
-        )
-
-        messages.forEach { message ->
-            assertTrue(feature.dispatchMessage(message))
-            delay(100L)
-        }
-
-        assertEquals(listOf(0, 10, 5), states)
-        assertEquals(listOf(zeroNumberEffect, negativeNumberEffect), effects)
+    @Test
+    fun returnTrueOnExecutionSuccess() = runTest {
+        assertTrue(feature.execute(TestCommand.Increment))
     }
 }
