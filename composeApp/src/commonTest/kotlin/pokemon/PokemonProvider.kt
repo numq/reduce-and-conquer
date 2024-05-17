@@ -16,6 +16,4 @@ object PokemonProvider {
             )
         )
     }
-
-    fun randomPokemon() = randomPokemonJson().toPokemon()
 }
