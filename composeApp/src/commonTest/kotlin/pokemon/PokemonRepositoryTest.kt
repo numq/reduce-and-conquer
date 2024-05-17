@@ -22,7 +22,7 @@ class PokemonRepositoryTest {
     }
 
     @Test
-    fun shouldReturnPokemons() = runTest {
+    fun returnPokemons() = runTest {
         val pokemons = arrayOfNulls<Unit>(10).map { PokemonProvider.randomPokemonJson() }
 
         coEvery { service.getPokemonImageById(any()) } returns Result.success(byteArrayOf())
@@ -35,7 +35,7 @@ class PokemonRepositoryTest {
     }
 
     @Test
-    fun shouldAttributeRanges() = runTest {
+    fun returnAttributeRanges() = runTest {
         val minAttribute = 0
         val maxAttribute = 255
         val pokemons = listOf(

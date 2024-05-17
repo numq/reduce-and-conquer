@@ -30,7 +30,7 @@ class PokemonServiceTest {
     }
 
     @Test
-    fun shouldReturnPokemons() = runTest {
+    fun returnPokemons() = runTest {
         val pokemons = arrayOfNulls<Unit>(10).map { PokemonProvider.randomPokemonJson() }.toTypedArray()
 
         coEvery { fileProvider.open(any()) } returns Result.success(byteArrayOf())
