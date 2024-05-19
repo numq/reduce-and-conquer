@@ -1,6 +1,5 @@
 package navigation
 
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertIs
@@ -8,15 +7,17 @@ import kotlin.test.assertTrue
 
 class NavigationFeatureTest {
     @Test
-    fun shouldReduceState() = runTest {
-        val feature = NavigationFeature(coroutineScope = backgroundScope)
+    fun changeDestination() = runTest {
+        val reducer = NavigationReducer()
 
-        assertTrue(feature.dispatchMessage(NavigationMessage.NavigateToPokedex))
-        delay(100L)
+        val feature = NavigationFeature(reducer)
+
+        assertTrue(feature.execute(NavigationCommand.NavigateToPokedex))
+
         assertIs<NavigationState.Pokedex>(feature.state.value)
 
-        assertTrue(feature.dispatchMessage(NavigationMessage.NavigateToDaily))
-        delay(100L)
+        assertTrue(feature.execute(NavigationCommand.NavigateToDaily))
+
         assertIs<NavigationState.Daily>(feature.state.value)
     }
 }
