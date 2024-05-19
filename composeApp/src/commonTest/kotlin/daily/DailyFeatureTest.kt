@@ -1,46 +1,31 @@
 package daily
 
+import card.FlippableCard
 import io.mockk.clearAllMocks
 import io.mockk.coEvery
 import io.mockk.mockk
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
-import pokemon.Pokemon
+import pokemon.PokemonProvider
+import pokemon.toPokemon
 import kotlin.test.*
 
 class DailyFeatureTest {
     private companion object {
         const val MAX_ATTRIBUTE_VALUE = 255
-        val pokemon = Pokemon(
-            id = 0,
-            name = "test",
-            types = emptySet(),
-            attributes = Pokemon.Attributes(
-                hp = Pokemon.Attribute(Pokemon.Attribute.Kind.HP, 0),
-                speed = Pokemon.Attribute(Pokemon.Attribute.Kind.SPEED, 0),
-                basicAttack = Pokemon.Attribute(Pokemon.Attribute.Kind.BASIC_ATTACK, 0),
-                basicDefense = Pokemon.Attribute(Pokemon.Attribute.Kind.BASIC_DEFENSE, 0),
-                specialAttack = Pokemon.Attribute(Pokemon.Attribute.Kind.SPECIAL_ATTACK, 0),
-                specialDefense = Pokemon.Attribute(Pokemon.Attribute.Kind.SPECIAL_DEFENSE, 0),
-            ),
-        )
+        val pokemon = PokemonProvider.randomPokemonJson().toPokemon()
     }
 
     private val getMaxAttributeValue: GetMaxAttributeValue = mockk()
-    private val getDailyPokemon: GetDailyPokemon = mockk()
-    private lateinit var feature: DailyFeature
 
-    private fun createFeature(coroutineScope: CoroutineScope) = DailyFeature(
-        getMaxAttributeValue = getMaxAttributeValue,
-        getDailyPokemon = getDailyPokemon,
-        coroutineScope = coroutineScope
-    )
+    private val getDailyPokemon: GetDailyPokemon = mockk()
+
+    private val reducer = DailyReducer(getMaxAttributeValue = getMaxAttributeValue, getDailyPokemon = getDailyPokemon)
+
+    private lateinit var feature: DailyFeature
 
     @BeforeTest
     fun beforeEach() {
-        coEvery { getMaxAttributeValue.execute(Unit) } returns Result.success(MAX_ATTRIBUTE_VALUE)
-        coEvery { getDailyPokemon.execute(Unit) } returns Result.success(pokemon)
+        feature = DailyFeature(reducer)
     }
 
     @AfterTest
@@ -49,20 +34,20 @@ class DailyFeatureTest {
     }
 
     @Test
-    fun shouldGetMaxAttribute() = runTest {
-        feature = createFeature(backgroundScope)
+    fun returnMaxAttribute() = runTest {
+        coEvery { getMaxAttributeValue.execute(Unit) } returns Result.success(MAX_ATTRIBUTE_VALUE)
 
-        assertTrue(feature.dispatchMessage(DailyMessage.GetMaxAttributeValue))
-        delay(100L)
+        assertTrue(feature.execute(DailyCommand.GetMaxAttributeValue))
+
         assertEquals(MAX_ATTRIBUTE_VALUE, feature.state.value.maxAttributeValue)
     }
 
     @Test
-    fun shouldGetDailyPokemon() = runTest {
-        feature = createFeature(backgroundScope)
+    fun returnDailyPokemon() = runTest {
+        coEvery { getDailyPokemon.execute(Unit) } returns Result.success(pokemon)
 
-        assertTrue(feature.dispatchMessage(DailyMessage.GetDailyPokemon))
-        delay(100L)
-        assertEquals(pokemon, feature.state.value.pokemon)
+        assertTrue(feature.execute(DailyCommand.GetDailyPokemon))
+
+        assertEquals(FlippableCard(item = pokemon), feature.state.value.card)
     }
 }
