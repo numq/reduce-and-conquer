@@ -1,4 +1,4 @@
-package pokedex.filter
+package pokedex.presentation.filter
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,6 +13,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
+import pokedex.filter.PokedexFilter
 import reduce_and_conquer.composeapp.generated.resources.*
 
 @OptIn(ExperimentalResourceApi::class)
@@ -44,7 +45,7 @@ fun FilterInteraction(
                         resetFilter(filter.criteria)
                     } ?: resetFilters()
                 },
-                enabled = isFiltered,
+                enabled = selectedFilter?.isModified() ?: isFiltered,
                 modifier = Modifier.weight(.5f)
             ) {
                 Text(

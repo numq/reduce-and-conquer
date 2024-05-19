@@ -30,21 +30,21 @@ fun PokedexView(feature: PokedexFeature = koinInject(), gridState: LazyGridState
 
     val state by feature.state.collectAsState()
 
+    val event by feature.events.collectAsState(null)
+
     LaunchedEffect(feature) {
         feature.events.filterIsInstance(PokedexEvent.Error::class).collect { error ->
             notificationQueue.push(message = error.message, label = Icons.Default.ErrorOutline)
         }
     }
 
-    LaunchedEffect(feature) {
-        feature.events.collect { event ->
-            when (event) {
-                is PokedexEvent.ScrollToStart -> gridState.animateScrollToItem(0)
+    LaunchedEffect(event) {
+        when (event) {
+            is PokedexEvent.ScrollToStart -> gridState.animateScrollToItem(0)
 
-                is PokedexEvent.ResetScroll -> gridState.scrollToItem(0)
+            is PokedexEvent.ResetScroll -> gridState.scrollToItem(0)
 
-                else -> Unit
-            }
+            else -> Unit
         }
     }
 

@@ -4,13 +4,10 @@ import card.FlippableCard
 import daily.GetMaxAttributeValue
 import feature.Reducer
 import pokedex.GetPokemons
-import pokedex.filter.GetFilters
-import pokedex.filter.PokedexFilter
 
 class CardsReducer(
     private val getMaxAttributeValue: GetMaxAttributeValue,
     private val getPokemons: GetPokemons,
-    private val getFilters: GetFilters,
 ) : Reducer<PokedexCommand.Cards, PokedexState, PokedexEvent> {
     override suspend fun reduce(state: PokedexState, command: PokedexCommand.Cards) = when (command) {
         is PokedexCommand.Cards.GetMaxAttributeValue -> getMaxAttributeValue.execute(Unit).fold(onSuccess = { value ->
@@ -19,17 +16,12 @@ class CardsReducer(
             transition(state, PokedexEvent.Error.GetMaxAttributeValue())
         })
 
-        is PokedexCommand.Cards.GetCards -> getFilters.execute(Unit).mapCatching { filters ->
-            getPokemons.execute(
-                GetPokemons.Input(skip = command.skip, limit = command.limit)
-            ).map { pokemons -> filters to pokemons.map(::FlippableCard) }.getOrThrow()
-        }.fold(onSuccess = { (filters, cards) ->
+        is PokedexCommand.Cards.GetCards -> getPokemons.execute(
+            GetPokemons.Input(skip = command.skip, limit = command.limit)
+        ).map { pokemons -> pokemons.map(::FlippableCard) }.fold(onSuccess = { cards ->
             transition(
                 state.copy(
-                    cards = cards.map { card -> state.cards.find { it.item.id == card.item.id } ?: card },
-                    isFiltered = filters.filterNot { filter ->
-                        filter.criteria == PokedexFilter.Criteria.NAME
-                    }.any(PokedexFilter::isModified)
+                    cards = cards.map { card -> state.cards.find { it.item.id == card.item.id } ?: card }
                 ),
                 PokedexEvent.ResetScroll()
             )

@@ -1,4 +1,4 @@
-package pokedex.filter
+package pokedex.presentation.filter
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import pokedex.filter.PokedexFilter
 import pokemon.Pokemon
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalLayoutApi::class)

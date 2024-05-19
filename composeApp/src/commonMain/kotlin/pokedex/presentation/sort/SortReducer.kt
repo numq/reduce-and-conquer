@@ -1,6 +1,7 @@
-package pokedex.presentation
+package pokedex.presentation.sort
 
 import feature.Reducer
+import pokedex.presentation.*
 import pokedex.sort.ChangeSort
 
 class SortReducer(

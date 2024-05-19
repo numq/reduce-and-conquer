@@ -20,10 +20,10 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import pokedex.filter.FilterInteraction
 import pokedex.filter.PokedexFilter
+import pokedex.presentation.filter.FilterInteraction
+import pokedex.presentation.sort.SortInteraction
 import pokedex.sort.PokedexSort
-import pokedex.sort.SortInteraction
 
 @Composable
 fun PokedexInteraction(

@@ -1,4 +1,4 @@
-package pokedex.filter
+package pokedex.presentation.filter
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import pokedex.filter.PokedexFilter
 import slider.IntRangeSlider
 
 @Composable

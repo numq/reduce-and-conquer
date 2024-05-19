@@ -1,6 +1,8 @@
 package pokedex.presentation
 
 import feature.Reducer
+import pokedex.presentation.filter.FilterReducer
+import pokedex.presentation.sort.SortReducer
 
 class PokedexReducer(
     private val cardsReducer: CardsReducer,

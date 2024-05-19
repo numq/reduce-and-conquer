@@ -1,4 +1,4 @@
-package pokedex.sort
+package pokedex.presentation.filter
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -13,46 +13,45 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
+import pokedex.filter.PokedexFilter
 import reduce_and_conquer.composeapp.generated.resources.*
 
 @OptIn(ExperimentalResourceApi::class, ExperimentalLayoutApi::class)
 @Composable
-fun SortInteraction(
+fun FilterRow(
     modifier: Modifier,
-    sort: PokedexSort,
-    sortPokemons: (PokedexSort) -> Unit,
+    filters: List<PokedexFilter>,
+    selectFilter: (PokedexFilter.Criteria) -> Unit,
 ) {
     FlowRow(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(8.dp, alignment = Alignment.CenterHorizontally),
         verticalArrangement = Arrangement.Center
     ) {
-        PokedexSort.Criteria.entries.forEach { criteria ->
-            when (criteria) {
-                PokedexSort.Criteria.NAME -> Res.string.sort_name
+        filters.filterNot { filter -> filter.criteria == PokedexFilter.Criteria.NAME }.forEach { filter ->
+            when (filter.criteria) {
+                PokedexFilter.Criteria.TYPE -> Res.string.filter_type
 
-                PokedexSort.Criteria.HP -> Res.string.sort_hp
+                PokedexFilter.Criteria.HP -> Res.string.filter_hp
 
-                PokedexSort.Criteria.SPEED -> Res.string.sort_speed
+                PokedexFilter.Criteria.SPEED -> Res.string.filter_speed
 
-                PokedexSort.Criteria.BASIC_ATTACK -> Res.string.sort_basic_attack
+                PokedexFilter.Criteria.BASIC_ATTACK -> Res.string.filter_basic_attack
 
-                PokedexSort.Criteria.BASIC_DEFENSE -> Res.string.sort_basic_defense
+                PokedexFilter.Criteria.BASIC_DEFENSE -> Res.string.filter_basic_defense
 
-                PokedexSort.Criteria.SPECIAL_ATTACK -> Res.string.sort_special_attack
+                PokedexFilter.Criteria.SPECIAL_ATTACK -> Res.string.filter_special_attack
 
-                PokedexSort.Criteria.SPECIAL_DEFENSE -> Res.string.sort_special_defense
-            }.let { res ->
-                if (criteria == sort.criteria) {
-                    OutlinedButton(onClick = {
-                        sortPokemons(sort.copy(isAscending = !sort.isAscending))
-                    }) {
+                PokedexFilter.Criteria.SPECIAL_DEFENSE -> Res.string.filter_special_defense
+
+                else -> null
+            }?.let { res ->
+                if (filter.isModified()) {
+                    OutlinedButton(onClick = { selectFilter(filter.criteria) }) {
                         Text(stringResource(res), textAlign = TextAlign.Center)
                     }
                 } else {
-                    Button(onClick = {
-                        sortPokemons(PokedexSort(criteria = criteria, isAscending = sort.isAscending))
-                    }) {
+                    Button(onClick = { selectFilter(filter.criteria) }) {
                         Text(stringResource(res), textAlign = TextAlign.Center)
                     }
                 }

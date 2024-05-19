@@ -22,7 +22,7 @@ sealed class PokedexFilter private constructor(open val criteria: Criteria) {
         val default: Set<Pokemon.Type>,
         val modified: Set<Pokemon.Type> = default,
     ) : PokedexFilter(criteria = Criteria.TYPE) {
-        override fun isModified() = default.containsAll(modified).not()
+        override fun isModified() = default.toTypedArray().contentEquals(modified.toTypedArray()).not()
         override fun reset() = Type(default = default, modified = default)
     }
 

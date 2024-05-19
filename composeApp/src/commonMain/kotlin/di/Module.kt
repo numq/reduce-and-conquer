@@ -13,7 +13,11 @@ import org.koin.dsl.module
 import pokedex.GetPokemons
 import pokedex.PokedexRepository
 import pokedex.filter.*
-import pokedex.presentation.*
+import pokedex.presentation.CardsReducer
+import pokedex.presentation.PokedexFeature
+import pokedex.presentation.PokedexReducer
+import pokedex.presentation.filter.FilterReducer
+import pokedex.presentation.sort.SortReducer
 import pokedex.sort.ChangeSort
 import pokemon.PokemonRepository
 import pokemon.PokemonService
@@ -51,7 +55,7 @@ private val pokedex = module {
     factory { ResetFilters(get()) }
     factory { ChangeSort(get()) }
     single { PokedexReducer(get(), get(), get()) }
-    single { CardsReducer(get(), get(), get()) }
+    single { CardsReducer(get(), get()) }
     single { FilterReducer(get(), get(), get(), get(), get(), get(), get()) }
     single { SortReducer(get(), get()) }
     single { PokedexFeature(get()) }

@@ -1,4 +1,4 @@
-package pokedex.filter
+package pokedex.presentation.filter
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import pokedex.filter.PokedexFilter
 
 @Composable
 fun SelectedFilter(
