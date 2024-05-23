@@ -196,13 +196,11 @@ This demonstrates the commutativity of the reduction function under the specific
 We have successfully proved that the reduction function $R$ satisfies both associativity and commutativity under the
 given conditions.
 This ensures that the reduction function behaves predictably and consistently when applying commands in different
-sequences,
-which is essential for ensuring the correctness and reliability of the system.
+sequences, which is essential for ensuring the correctness and reliability of the system.
 
 The associativity property ensures that the order in which commands are applied does not affect the final state and
-events,
-while the commutativity property ensures that commands can be applied in any order without affecting the result under
-specific conditions.
+events, while the commutativity property ensures that commands can be applied in any order without affecting the result
+under specific conditions.
 These properties provide a solid foundation for ensuring the correctness and reliability of the system, influencing its
 design and maintenance.
 
@@ -210,58 +208,59 @@ design and maintenance.
 
 ### Model-View-Controller
 
-The **MVC** pattern separates concerns into three parts: `Model`, `View`, and `Controller`.<br>
+The _MVC_ pattern separates concerns into three parts: `Model`, `View`, and `Controller`.<br>
 The `Model` represents the data, the `View` represents the UI,
 and the `Controller` handles user input and updates the `Model`.<br>
-In contrast, the **Reduce & Conquer** combines the `Model` and `Controller` into a single unit.
+In contrast, the _Reduce & Conquer_ combines the `Model` and `Controller` into a single unit.
 
 ### Model-View-Presenter
 
-The **MVP** pattern is similar to **MVC**,
+The _MVP_ pattern is similar to _MVC_,
 but it separates concerns into three parts: `Model`, `View`, and`Presenter`.<br>
 The `Presenter` acts as an intermediary between the `Model` and `View`, handling user input and updating
 the `Model`.<br>
-The **Reduce & Conquer** is more lightweight than **MVP**, as it does not require a separate `Presenter` layer.
+The _Reduce & Conquer_ is more lightweight than _MVP_, as it does not require a separate `Presenter` layer.
 
 ### Model-View-ViewModel
 
-The **MVVM** pattern is similar to **MVP**,
+The _MVVM_ pattern is similar to _MVP_,
 but it uses a `ViewModel` as an intermediary between the `Model`and `View`.<br>
 The `ViewModel` exposes data and commands to the `View`, which can then bind to them.<br>
-The **Reduce & Conquer** is more flexible than **MVVM**, as it does not require a separate `ViewModel` layer.
+The _Reduce & Conquer_ is more flexible than _MVVM_, as it does not require a separate `ViewModel` layer.
 
 ### Model-View-Intent
 
-The **MVI** pattern is similar to **MVVM**,
+The _MVI_ pattern is similar to _MVVM_,
 but it uses an `Intent` as an intermediary between the `Model` and`View`.<br>
 The `Intent` represents user input and intent, which is then used to update the `Model`.<br>
-The **Reduce & Conquer** is more simple than **MVI**, as it does not require an `Intent` layer.
+The _Reduce & Conquer_ is more simple than _MVI_, as it does not require an `Intent` layer.
 
 ### Redux
 
-The **Redux** pattern uses a global store to manage application state.<br>
+The _Redux_ pattern uses a global store to manage application state.<br>
 Actions are dispatched to update the store, which then triggers updates to connected components.<br>
-The **Reduce & Conquer** uses a local state flow instead of a global store,
+The _Reduce & Conquer_ uses a local state flow instead of a global store,
 which makes it more scalable for large applications.
 
 ### The Elm Architecture
 
-The **TEA** pattern uses a functional programming approach to manage application state.<br>
+The _TEA_ pattern uses a functional programming approach to manage application state.<br>
 The architecture consists of four parts: `Model`, `Update`, `View`, and `Input`.<br>
 The `Model` represents application state,
 `Update` functions update the `Model` based on user input and commands,
 `View`functions render the `Model` to the UI, and `Input` functions handle user input.<br>
-The **Reduce & Conquer** uses a similar approach to **TEA**, but with a focus on reactive programming and coroutines.
+The _Reduce & Conquer_ uses a similar approach to _TEA_, but with a focus on reactive programming and
+coroutines.
 
 ### Event-Driven Architecture
 
-The **EDA** pattern involves processing events as they occur.<br>
+The _EDA_ pattern involves processing events as they occur.<br>
 In this pattern, components are decoupled from each other, and events are used to communicate between components.<br>
-The **Reduce & Conquer** uses events to communicate between components,
+The _Reduce & Conquer_ uses events to communicate between components,
 but it also provides a more structured approach to managing state transitions.
 
 ### Reactive Architecture
 
-The **Reactive Architecture** pattern involves using reactive programming to manage complex systems.<br>
+The _Reactive Architecture_ pattern involves using reactive programming to manage complex systems.<br>
 In this pattern, components are designed to react to changes in their inputs.<br>
-The **Reduce & Conquer** uses reactive programming to manage state transitions and emit events.
+The _Reduce & Conquer_ uses reactive programming to manage state transitions and emit events.
