@@ -152,7 +152,7 @@ $$R(R(s, c_1), c_2) = R(s, c_1 \circ c_2)$$
 
 2. **Apply Command $c_2$ to the New State $s_1$**:
    $$R(s_1, c_2) = (s_2, e_2)$$
-   where $s_2$ is the new state after applying $$c_2$$ to $$s_1$$ and $$e_2$$ is the event generated.
+   where $s_2$ is the new state after applying $c_2$ to $s_1$ and $e_2$ is the event generated.
 
 3. **Sequential Application of Commands $c_1$ and $c_2$**:
    $$R(s, c_1 \circ c_2) = (s_2, e_1 \cup e_2)$$
