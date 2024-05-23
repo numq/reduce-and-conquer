@@ -104,7 +104,7 @@ A functional interface that takes three generic type parameters: `Command`, `Sta
 
 #### Methods:
 
-- `reduce(state: State, command: Command)` Reduces the `State`: with the given `Command` and returns a `Transition`
+- `reduce(state: State, command: Command)`: Reduces the `State` with the given `Command` and returns a `Transition`
 - `transition(state: State, events: List<Event> = emptyList())`: Constructs a `Transition` with the given `State` and
   list of `Event`s
 - `transition(state: State, event: Event)`: Constructs a `Transition` with the given `State` and a single `Event`
