@@ -29,14 +29,7 @@ ___
 
 ## About
 
-This repository showcases the "Reduce & Conquer" architectural pattern,
-which leverages functional programming principles and pure functions to create predictable and testable functional
-components.
-Unlike traditional architectural patterns, such as MVC or MVVM,
-"Reduce & Conquer" emphasizes the separation of concerns and the use of pure functions to handle state transitions and
-business logic.
-
-This repository contains a proof of concept of the "Reduce & Conquer" pattern built into the Clean Architecture,
+This repository contains a proof of concept of the **Reduce & Conquer** pattern built into the Clean Architecture,
 using the example of a cross-platform **Pokédex** application built using the Compose Multiplatform UI Framework.
 
 ![Gif application demonstration](media/demonstration.gif)
