@@ -26,6 +26,8 @@ ___
     - [The Elm Architecture](#the-elm-architecture)
     - [Event-Driven Architecture](#event-driven-architecture)
     - [Reactive Architecture](#reactive-architecture)
+- [Clean Architecture](#clean-architecture)
+- [Proof of concept](#proof-of-concept)
 
 ## About
 
@@ -124,9 +126,9 @@ A data class that represents a state transition.
 
 ### Definition
 
-Let $$S$$ be the set of states, $$C$$ be the set of commands, and $$E$$ be the set of events.
+Let $S$ be the set of states, $C$ be the set of commands, and $E$ be the set of events.
 
-We define a function $$R: S \times C \rightarrow (S, E)$$, which represents the reduction function that takes a state
+We define a function $R: S \times C \rightarrow (S, E)$, which represents the reduction function that takes a state
 and a command as input and returns a new state and a set of events.
 
 ### Proposition
@@ -270,3 +272,7 @@ but it also provides a more structured approach to managing state transitions.
 The **Reactive Architecture** pattern involves using reactive programming to manage complex systems.<br>
 In this pattern, components are designed to react to changes in their inputs.<br>
 The **Reduce & Conquer** uses reactive programming to manage state transitions and emit events.
+
+## Clean Architecture
+
+## Proof of concept
