@@ -17,6 +17,11 @@ ___
     - [Reducer](#reducer)
     - [Transition](#transition)
 - [Mathematical proof](#mathematical-proof)
+    - [Definition](#definition)
+    - [Proposition](#proposition)
+    - [Proof of Associativity](#proof-of-associativity)
+    - [Proof of Commutativity](#proof-of-commutativity)
+    - [Conclusion](#conclusion)
 - [Comparison with popular patterns](#comparison-with-popular-patterns)
     - [MVC](#model-view-controller)
     - [MVP](#model-view-presenter)
@@ -29,8 +34,9 @@ ___
 
 ## About
 
-This repository contains a proof of concept of the **Reduce & Conquer** pattern built into the Clean Architecture,
-using the example of a cross-platform **Pokédex** application built using the Compose Multiplatform UI Framework.
+This repository contains a [proof of concept](#proof-of-concept) of the **Reduce & Conquer** pattern built into
+the [Clean Architecture](#clean-architecture), using the example of a cross-platform **Pokédex** application built using
+the Compose Multiplatform UI Framework.
 
 ![Gif application demonstration](media/demonstration.gif)
 
