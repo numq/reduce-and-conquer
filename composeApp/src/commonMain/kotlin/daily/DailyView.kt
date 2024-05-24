@@ -23,14 +23,13 @@ import notification.NotificationError
 import notification.queue.rememberNotificationQueue
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.koinInject
 import pokemon.card.PokemonCard
 import reduce_and_conquer.composeapp.generated.resources.Res
 import reduce_and_conquer.composeapp.generated.resources.daily_pokemon_of_the_day
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
-fun DailyView(feature: DailyFeature = koinInject()) {
+fun DailyView(feature: DailyFeature) {
     val coroutineScope = rememberCoroutineScope()
 
     val notificationQueue = rememberNotificationQueue()

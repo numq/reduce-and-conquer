@@ -20,10 +20,9 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.launch
 import notification.NotificationError
 import notification.queue.rememberNotificationQueue
-import org.koin.compose.koinInject
 
 @Composable
-fun PokedexView(feature: PokedexFeature = koinInject(), gridState: LazyGridState) {
+fun PokedexView(feature: PokedexFeature, gridState: LazyGridState) {
     val coroutineScope = rememberCoroutineScope { Dispatchers.Default }
 
     val notificationQueue = rememberNotificationQueue()

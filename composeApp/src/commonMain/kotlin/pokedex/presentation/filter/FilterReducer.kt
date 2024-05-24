@@ -17,11 +17,14 @@ class FilterReducer(
     override suspend fun reduce(state: PokedexState, command: PokedexCommand.Filter) = when (command) {
         is PokedexCommand.Filter.InitializeFilters -> initializeFilters.execute(Unit).mapCatching {
             getFilters.execute(Unit).getOrThrow()
-        }.fold(onSuccess = { filters ->
-            transition(state.copy(filters = filters))
-        }, onFailure = {
-            transition(state, PokedexEvent.Error.UnableToInitializeFilters())
-        })
+        }.fold(
+            onSuccess = { filters ->
+                transition(state.copy(filters = filters))
+            },
+            onFailure = {
+                transition(state, PokedexEvent.Error.UnableToInitializeFilters())
+            }
+        )
 
         is PokedexCommand.Filter.ToggleFilterMode -> transition(
             state.copy(interactionMode = PokedexInteractionMode.FILTER.takeIf { mode ->
@@ -29,11 +32,14 @@ class FilterReducer(
             } ?: PokedexInteractionMode.NONE)
         )
 
-        is PokedexCommand.Filter.SelectFilter -> selectFilter.execute(command.criteria).fold(onSuccess = { filter ->
-            transition(state.copy(selectedFilter = filter))
-        }, onFailure = {
-            transition(state, PokedexEvent.Error.UnableToSelectFilter())
-        })
+        is PokedexCommand.Filter.SelectFilter -> selectFilter.execute(command.criteria).fold(
+            onSuccess = { filter ->
+                transition(state.copy(selectedFilter = filter))
+            },
+            onFailure = {
+                transition(state, PokedexEvent.Error.UnableToSelectFilter())
+            }
+        )
 
         is PokedexCommand.Filter.UpdateFilter -> updateFilter.execute(command.filter).mapCatching { updatedFilter ->
             state.filters.map { filter ->
@@ -55,11 +61,14 @@ class FilterReducer(
                     )
                 )
             }
-        }.fold(onSuccess = { (state, events) ->
-            cardsReducer.reduce(state, PokedexCommand.Cards.ResetScroll).mergeEvents(events)
-        }, onFailure = {
-            transition(state, PokedexEvent.Error.UnableToUpdateFilter())
-        })
+        }.fold(
+            onSuccess = { (state, events) ->
+                cardsReducer.reduce(state, PokedexCommand.Cards.ResetScroll).mergeEvents(events)
+            },
+            onFailure = {
+                transition(state, PokedexEvent.Error.UnableToUpdateFilter())
+            }
+        )
 
         is PokedexCommand.Filter.ResetFilter -> if (state.isFiltered) {
             resetFilter.execute(command.criteria).map { updatedFilter ->
@@ -76,11 +85,14 @@ class FilterReducer(
                     ),
                     PokedexCommand.Cards.GetCards(skip = 0, limit = PokedexConstants.DEFAULT_LIMIT)
                 )
-            }.fold(onSuccess = { (state, events) ->
-                cardsReducer.reduce(state, PokedexCommand.Cards.ResetScroll).mergeEvents(events)
-            }, onFailure = {
-                transition(state, PokedexEvent.Error.UnableToResetFilter())
-            })
+            }.fold(
+                onSuccess = { (state, events) ->
+                    cardsReducer.reduce(state, PokedexCommand.Cards.ResetScroll).mergeEvents(events)
+                },
+                onFailure = {
+                    transition(state, PokedexEvent.Error.UnableToResetFilter())
+                }
+            )
         } else transition(state)
 
         is PokedexCommand.Filter.CloseFilter -> transition(state.copy(selectedFilter = null))
@@ -99,11 +111,14 @@ class FilterReducer(
                         PokedexCommand.Cards.GetCards(skip = 0, limit = PokedexConstants.DEFAULT_LIMIT)
                     )
                 }.getOrThrow()
-            }.fold(onSuccess = { (state, events) ->
-                cardsReducer.reduce(state, PokedexCommand.Cards.ResetScroll).mergeEvents(events)
-            }, onFailure = {
-                transition(state, PokedexEvent.Error.UnableToResetFilters())
-            })
+            }.fold(
+                onSuccess = { (state, events) ->
+                    cardsReducer.reduce(state, PokedexCommand.Cards.ResetScroll).mergeEvents(events)
+                },
+                onFailure = {
+                    transition(state, PokedexEvent.Error.UnableToResetFilters())
+                }
+            )
         } else transition(state)
     }
 }
