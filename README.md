@@ -312,7 +312,7 @@ graph LR
 
 > [!TIP]
 > Organize your package structure by overall model or functionality rather than by purpose.
-> This type of architecture is called "screaming".
+> This type of architecture is called **"screaming"**.
 
 ### The architecture is composed of the following layers:
 
