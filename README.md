@@ -31,6 +31,8 @@ ___
     - [The Elm Architecture](#the-elm-architecture)
     - [Event-Driven Architecture](#event-driven-architecture)
     - [Reactive Architecture](#reactive-architecture)
+- [Clean Architecture](#clean-architecture)
+- [Proof of concept](#proof-of-concept)
 
 ## About
 
@@ -49,12 +51,13 @@ create predictable and testable functional components.
 classDiagram
     class Feature {
         -initialState: State
+        - eventBufferCapacity: Int,
         -reducer: Reducer<Command, State, Event>
         -coroutineScope: CoroutineScope
         -_state: MutableStateFlow<State>
-        -_events: Channel<Event>
+        -_events: MutableSharedFlow<Event>
         +state: StateFlow<State>
-        +events: Flow<Event>
+        +events: SharedFlow<Event>
         +execute(command: Command): Boolean
     }
     class Reducer {
@@ -83,8 +86,8 @@ A class or object that describes an action that entails updating state and/or ra
 
 ### Event
 
-> Note: It's not a side effect because reduce is a pure function that returns the same result for the same
-> arguments.
+> [!NOTE]
+> It's not a side effect because reduce is a pure function that returns the same result for the same arguments.
 
 A class or object that describes the event caused by the execution of a command and the reduction of the presentation
 state, which may contain non-persistent data.
@@ -93,25 +96,30 @@ state, which may contain non-persistent data.
 
 An abstract class that takes three type parameters: `Command`, `State` and `Event`.
 
+**A functional unit** or aggregate of presentation logic within isolated functionality.
+
 #### Properties:
 
-- `initialState`: The initial state of the feature
-- `coroutineScope`: A coroutine scope that allows for asynchronous execution
-- `_state`: A mutable state flow that stores the current state
-- `_events`: A channel that sends events to the outside world
-- `state`: A read-only state flow that exposes the current state
-- `events`: A read-only flow that exposes the events emitted by the feature
+- `initialState`: The initial state of the feature.
+- `eventBufferCapacity`: The buffer capacity for events.
+- `coroutineScope`: A coroutine scope that allows for asynchronous execution.
+- `_state`: A mutable state flow that stores the current state.
+- `_events`: A mutable shared flow that sends events to the outside world.
+- `state`: A read-only state flow that exposes the current state.
+- `events`: A read-only shared flow that exposes the events emitted by the feature.
 
 ### Reducer
 
-A functional interface that takes three generic type parameters: `Command`, `State` and `Event`. <br>
+A functional interface that takes three generic type parameters: `Command`, `State` and `Event`.
+
+**A stateless component** responsible for reducing the input command to a new state and generating events.
 
 #### Methods:
 
 - `reduce(state: State, command: Command)`: Reduces the `State` with the given `Command` and returns a `Transition`
 - `transition(state: State, events: List<Event> = emptyList())`: Constructs a `Transition` with the given `State` and
-  list of `Event`s
-- `transition(state: State, event: Event)`: Constructs a `Transition` with the given `State` and a single `Event`
+  list of `Event`s.
+- `transition(state: State, event: Event)`: Constructs a `Transition` with the given `State` and a single `Event`.
 
 ### Transition
 
@@ -119,8 +127,8 @@ A data class that represents a state transition.
 
 #### Properties:
 
-- `state`: The new state
-- `events`: A list of events emitted during the transition, which can be empty
+- `state`: The new state.
+- `events`: A list of events emitted during the transition, which can be empty.
 
 #### Extension functions:
 
@@ -270,3 +278,155 @@ but it also provides a more structured approach to managing state transitions.
 The _Reactive Architecture_ pattern involves using reactive programming to manage complex systems.<br>
 In this pattern, components are designed to react to changes in their inputs.<br>
 The _Reduce & Conquer_ uses reactive programming to manage state transitions and emit events.
+
+## Clean Architecture
+
+**Clean Architecture** is a software design pattern that separates the application's business logic into layers, each
+with its own responsibilities.
+
+The main idea is to create a clear separation of concerns, making it easier to maintain, test, and scale the system.
+
+```mermaid
+graph LR
+    subgraph "Presentation Layer"
+        View["View"] --> Feature["Feature"]
+        Feature["Feature"] --> Reducer["Reducer"]
+    end
+
+    subgraph "Domain Layer"
+        UseCase["Use Case"] --> Repository["Repository"]
+        UseCase["Use Case"] --> Entity["Entity"]
+    end
+
+    subgraph "Infrastructure Layer"
+        direction TB
+        Dao["DAO"] --> Database["Database"]
+        Service["Service"] --> FileSystem["File System"]
+        Service["Service"] --> NetworkClient["Network Client"]
+    end
+
+    Reducer --> UseCase
+    Repository --> Dao
+    Repository --> Service
+```
+
+> [!TIP]
+> Organize your package structure by overall model or functionality rather than by purpose.
+> This type of architecture is called "screaming".
+
+### The architecture is composed of the following layers:
+
+#### Entities
+
+Representing the business domain, such as users, products, or orders.
+
+#### Use Cases
+
+Defining the actions that can be performed on the entities, such as logging in, creating an order, or updating a user.
+
+#### Interface Adapters
+
+Handling communication between the application and external systems, such as databases, networks, or file systems.
+
+#### Frameworks and Drivers
+
+Providing the necessary infrastructure for the application to run, such as web servers, databases, or operating systems.
+
+`Reduce & Conquer` is a part of `Frameworks and Drivers`, as it is an architectural pattern that provides an
+implementation of presentation.
+
+> [!TIP]
+> Follow the `Feature per View` principle and achieve decomposition by dividing reducers into sub-reducers.
+
+## Proof of concept
+
+A cross-platform Pokédex application built using the Compose Multiplatform UI Framework.
+
+```mermaid
+graph TD
+    subgraph "Use Case"
+        GetMaxAttributeValue["Get Max Attribute Value"]
+        GetDailyPokemon["Get Daily Pokemon"]
+        GetPokemons["Get Pokemons"]
+        InitializeFilters["Initialize Filters"]
+        GetFilters["Get Filters"]
+        SelectFilter["Select Filter"]
+        UpdateFilter["Update Filter"]
+        ResetFilter["Reset Filter"]
+        ResetFilters["Reset Filters"]
+        CardsReducer["Cards Reducer"]
+        ChangeSort["Change Sort"]
+    end
+
+    subgraph "Navigation"
+        NavigationView["Navigation View"] --> NavigationFeature["Navigation Feature"]
+        NavigationFeature["Navigation Feature"] --> NavigationReducer["Navigation Reducer"]
+    end
+
+    NavigationReducer["Navigation Reducer"] --> NavigationCommand["Navigation Command"]
+    NavigationCommand["Navigation Command"] --> DailyView["Daily View"]
+    NavigationCommand["Navigation Command"] --> PokedexView["Pokedex View"]
+
+    subgraph "Daily"
+        DailyView["Daily View"] --> DailyFeature["Daily Feature"]
+        DailyFeature["Daily Feature"] --> DailyReducer["Daily Reducer"]
+    end
+
+    DailyReducer["Daily Reducer"] --> GetMaxAttributeValue["Get Max Attribute Value"]
+    DailyReducer["Daily Reducer"] --> GetDailyPokemon["Get Daily Pokemon"]
+
+    subgraph "Pokedex"
+        PokedexView["Pokedex View"] --> PokedexFeature["Pokedex Feature"]
+        PokedexFeature["Pokedex Feature"] --> PokedexReducer["Pokedex Reducer"]
+        PokedexReducer["Pokedex Reducer"] --> CardsReducer["Cards Reducer"]
+        PokedexReducer["Pokedex Reducer"] --> FilterReducer["Filter Reducer"]
+        PokedexReducer["Pokedex Reducer"] --> SortReducer["Sort Reducer"]
+    end
+
+    PokedexReducer["Pokedex Reducer"] --> CardsReducer["Cards Reducer"]
+    CardsReducer["Cards Reducer"] --> GetMaxAttributeValue["Get Max Attribute Value"]
+    CardsReducer["Cards Reducer"] --> GetPokemons["Get Pokemons"]
+    PokedexReducer["Pokedex Reducer"] --> FilterReducer["Filter Reducer"]
+    FilterReducer["Filter Reducer"] --> InitializeFilters["Initialize Filters"]
+    FilterReducer["Filter Reducer"] --> GetFilters["Get Filters"]
+    FilterReducer["Filter Reducer"] --> SelectFilter["Select Filter"]
+    FilterReducer["Filter Reducer"] --> UpdateFilter["Update Filter"]
+    FilterReducer["Filter Reducer"] --> ResetFilter["Reset Filter"]
+    FilterReducer["Filter Reducer"] --> ResetFilters["Reset Filters"]
+    PokedexReducer["Pokedex Reducer"] --> SortReducer["Sort Reducer"]
+    SortReducer["Sort Reducer"] --> CardsReducer["Cards Reducer"]
+    SortReducer["Sort Reducer"] --> ChangeSort["Change Sort"]
+```
+
+### Navigation feature functionality:
+
+- Switching between Daily and Pokedex screens (functionality).
+
+### Daily feature functionality:
+
+- Get a Pokemon of the Day card based on the current day's timestamp
+
+### Pokedex feature functionality:
+
+- Getting a grid of Pokemon cards
+- Search by name
+- Multiple filtering by criteria
+- Reset filtering
+- Sorting by criteria
+
+> [!NOTE]
+> The Pokemon card is a double-sided rotating card where
+> - front side contains name, image and type affiliation
+> - back side contains name and hexagonal skill graph
+
+### Libraries
+
+- Kotlin Compose Multiplatform
+- Kotlin Coroutines
+- Kotlin Flow
+- Kotlin Datetime
+- Kotlin Serialization Json
+- Koin Dependency Injection
+- Kotlin Multiplatform UUID
+- Kotlin Coroutines Test
+- Mockk
