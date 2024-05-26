@@ -336,7 +336,7 @@ Providing the necessary infrastructure for the application to run, such as web s
 implementation of presentation.
 
 > [!TIP]
-> Follow the `Feature per View` principle and achieve decomposition by dividing reducers into sub-reducers.
+> Follow the **Feature per View principle** and achieve decomposition by dividing reducers into sub-reducers.
 
 ## Proof of concept
 
