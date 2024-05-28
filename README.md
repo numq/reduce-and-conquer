@@ -78,6 +78,10 @@ classDiagram
 
 ### State
 
+> [!TIP]
+> The idempotent nature of deterministic state allows you to implement functionality such as rolling back the state to a
+> previous version.
+
 A class or object that describes the current state of the presentation.
 
 ### Command
@@ -89,8 +93,8 @@ A class or object that describes an action that entails updating state and/or ra
 > [!NOTE]
 > It's not a side effect because reduce is a pure function that returns the same result for the same arguments.
 
-A class or object that describes the **"Fire-and-forget"** event caused by executing a command and reducing the view's
-state.<br>
+A class or object that describes the **"Fire and forget"** event caused by the execution of a command and the reduction
+of the presentation state.<br>
 May contain a payload.
 
 ### Feature
@@ -428,7 +432,7 @@ class SearchReducer(
         )
 
         is SearchCommand.AddUser -> transition(state.copy(users = state.users.plus(command.user)))
-        
+
         else -> transition(state)
     }
 }
