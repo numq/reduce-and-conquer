@@ -78,7 +78,7 @@ classDiagram
 
 ### State
 
-A class or object that describes the current state of the presentation, which may contain persistent data.
+A class or object that describes the current state of the presentation.
 
 ### Command
 
@@ -89,8 +89,9 @@ A class or object that describes an action that entails updating state and/or ra
 > [!NOTE]
 > It's not a side effect because reduce is a pure function that returns the same result for the same arguments.
 
-A class or object that describes the event caused by the execution of a command and the reduction of the presentation
-state, which may contain non-persistent data.
+A class or object that describes the **"Fire-and-forget"** event caused by executing a command and reducing the view's
+state.<br>
+May contain a payload.
 
 ### Feature
 
@@ -310,6 +311,22 @@ graph LR
     Repository --> Service
 ```
 
+**Clean Architecture** can be represented as follows:
+
+```kotlin
+View(
+    Feature(
+        Reducer(
+            UseCase(
+                Repository(
+                    Service
+                )
+            )
+        )
+    )
+)
+```
+
 > [!TIP]
 > Organize your package structure by overall model or functionality rather than by purpose.
 > This type of architecture is called **"screaming"**.
@@ -337,6 +354,88 @@ implementation of presentation.
 
 > [!TIP]
 > Follow the **Feature per View principle** and achieve decomposition by dividing reducers into sub-reducers.
+
+#### Working with data flows
+
+Let's say there is a **command** that calls a **use case**, which returns a `flow` with data that needs to be stored in
+the **state**.
+
+As a container, `flow` is only useful as long as it is collected, which means it can be classified as **a one-time
+payload**.
+
+As should be done with this kind of data, `flow` must be processed using the appropriate mechanism - **events**,
+which **must begin to be collected before executing the command** that returns the **event** containing `flow`.
+
+Thus, we can set an arbitrary `flow` processing strategy, as well as **manage the lifecycle of the collector using
+coroutines**, without going beyond the functional paradigm.
+
+Here is an example implementation of flow collection:
+
+```kotlin
+data class User(val id: String)
+
+interface UserRepository {
+    suspend fun getUsers(): Result<Flow<User>>
+}
+
+class GetUsers(private val userRepository: UserRepository) {
+    suspend fun execute() = userRepository.getUsers()
+}
+
+sealed interface SearchCommand {
+    data object GetUsers : SearchCommand
+
+    data class AddUser(val user: User) : SearchCommand
+}
+
+data class SearchState(
+    val users: List<User> = emptyList(),
+)
+
+sealed interface SearchEvent : Event {
+    data class Error(val exception: Exception) : SearchEvent
+
+    data class UserUpdates(val users: Flow<User>) : SearchEvent
+}
+
+class SearchFeature(reducer: SearchReducer) : Feature<SearchCommand, SearchState, SearchEvent>(
+    initialState = SearchState(),
+    reducer = reducer
+) {
+    init {
+        coroutineScope.launch {
+            events.filterIsInstance<SearchEvent.UserUpdates>().map { event: SearchEvent.UserUpdates ->
+                event.users.collect { user: User ->
+                    execute(SearchCommand.AddUser(user = user))
+                }
+            }.launchIn(this)
+            execute(SearchCommand.GetUsers)
+        }
+    }
+}
+
+class SearchReducer(
+    private val getUsers: GetUsers,
+) : Reducer<SearchCommand, SearchState, SearchEvent> {
+    override suspend fun reduce(state: SearchState, command: SearchCommand) = when (command) {
+        is SearchCommand.GetUsers -> getUsers.execute().fold(
+            onSuccess = { users: Flow<User> ->
+                transition(state, SearchEvent.UserUpdates(users = users))
+            },
+            onFailure = {
+                transition(state, SearchEvent.Error(Exception(it)))
+            }
+        )
+
+        is SearchCommand.AddUser -> transition(state.copy(users = state.users.plus(command.user)))
+        
+        else -> transition(state)
+    }
+}
+```
+
+Due to the fact that we start the collection once, there is no need to manage the collection `flow`,
+job is not stored in a variable.
 
 ## Proof of concept
 
