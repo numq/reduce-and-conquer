@@ -32,7 +32,10 @@ ___
     - [Event-Driven Architecture](#event-driven-architecture)
     - [Reactive Architecture](#reactive-architecture)
 - [Clean Architecture](#clean-architecture)
+    - [Working with data flows](#working-with-data-flows)
 - [Proof of concept](#proof-of-concept)
+    - [Features](#features)
+    - [Libraries](#libraries)
 
 ## About
 
@@ -363,7 +366,7 @@ implementation of presentation.
 > [!TIP]
 > Follow the **Feature per View principle** and achieve decomposition by dividing reducers into sub-reducers.
 
-#### Working with data flows
+### Working with data flows
 
 Let's say there is a **command** that calls a **use case**, which returns a `flow` with data that needs to be stored in
 the **state**.
@@ -505,15 +508,17 @@ graph TD
     SortReducer["Sort Reducer"] --> ChangeSort["Change Sort"]
 ```
 
-### Navigation feature functionality:
+### Features
+
+#### Navigation feature functionality:
 
 - Switching between Daily and Pokedex screens (functionality).
 
-### Daily feature functionality:
+#### Daily feature functionality:
 
 - Get a Pokemon of the Day card based on the current day's timestamp
 
-### Pokedex feature functionality:
+#### Pokedex feature functionality:
 
 - Getting a grid of Pokemon cards
 - Search by name
