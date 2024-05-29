@@ -139,6 +139,10 @@ A data class that represents a state transition.
 
 - `mergeEvents`: Takes a list of events and merges them with the events of a given transition.
 
+> [!IMPORTANT]
+> Events passed as an argument will be processed **BEFORE** current state events. <br>
+> This is due to the fact that `mergeEvent` is used for already created events.
+
 ## Mathematical Proof
 
 ### Definition
