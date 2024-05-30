@@ -21,7 +21,9 @@ class FeatureTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
 
-        feature = object : Feature<TestCommand, TestState, TestEvent>(TestState(0), TestReducer()) {}
+        feature = object : Feature<TestCommand, TestState, TestEvent>(
+            initialState = TestState(0), reducer = TestReducer()
+        ) {}
 
         feature.events.onEach { event ->
             events.add(event)
@@ -45,7 +47,22 @@ class FeatureTest {
         assertTrue(feature.execute(TestCommand.Decrement))
         assertEquals(0, feature.state.value.count)
 
+        assertTrue(feature.execute(TestCommand.IncrementByTwo))
+        assertEquals(2, feature.state.value.count)
+
+        assertTrue(feature.execute(TestCommand.DecrementByTwo))
+        assertEquals(0, feature.state.value.count)
+
         testDispatcher.scheduler.advanceUntilIdle()
-        assertEquals(listOf(TestEvent.Incremented, TestEvent.Decremented), events)
+        assertEquals(
+            listOf(
+                TestEvent.Incremented,
+                TestEvent.Decremented,
+                TestEvent.Incremented,
+                TestEvent.Incremented,
+                TestEvent.Decremented,
+                TestEvent.Decremented
+            ), events
+        )
     }
 }
