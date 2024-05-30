@@ -65,12 +65,12 @@ classDiagram
     }
     class Reducer {
         +suspend reduce(state: State, command: Command): Transition<State, Event>
-        +transition(state: State, events: List<Event>): Transition<State, Event>
-        +transition(state: State, event: Event): Transition<State, Event>
+        +transition(state: State, vararg event: Event): Transition<State, Event>
     }
     class Transition {
         +state: State
         +events: List<Event>
+        +mergeEvents(vararg event: Event): Transition<State, Event>
         +mergeEvents(events: List<Event>): Transition<State, Event>
     }
 
@@ -125,9 +125,10 @@ A functional interface that takes three generic type parameters: `Command`, `Sta
 #### Methods:
 
 - `reduce(state: State, command: Command)`: Reduces the `State` with the given `Command` and returns a `Transition`
+- `transition(state: State, vararg event: Event)`: Constructs a `Transition` with the given `State` and
+  variadic `Event`.
 - `transition(state: State, events: List<Event> = emptyList())`: Constructs a `Transition` with the given `State` and
   list of `Event`s.
-- `transition(state: State, event: Event)`: Constructs a `Transition` with the given `State` and a single `Event`.
 
 ### Transition
 
@@ -135,12 +136,13 @@ A data class that represents a state transition.
 
 #### Properties:
 
-- `state`: The new state.
-- `events`: A list of events emitted during the transition, which can be empty.
+- `state`: The new `State`.
+- `events`: A list of `Event`s emitted during the transition, which can be empty.
 
 #### Extension functions:
 
-- `mergeEvents`: Takes a list of events and merges them with the events of a given transition.
+- `mergeEvents(vararg event: Event)`: Takes a variadic `Event` and merges it with the `Event`s of a given transition.
+- `mergeEvents(events: List<Event>)`: Takes a list of `Event`s and merges them with the `Event`s of a given transition.
 
 > [!IMPORTANT]
 > Events passed as an argument will be processed **BEFORE** current events. <br>
