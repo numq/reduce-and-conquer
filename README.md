@@ -33,6 +33,7 @@ ___
     - [Reactive Architecture](#reactive-architecture)
 - [Clean Architecture](#clean-architecture)
     - [Working with data flows](#working-with-data-flows)
+    - [Testing](#testing)
 - [Proof of concept](#proof-of-concept)
     - [Features](#features)
     - [Libraries](#libraries)
@@ -449,6 +450,19 @@ class SearchReducer(
 
 Due to the fact that we start the collection once, there is no need to manage the collection `flow`,
 job is not stored in a variable.
+
+### Testing
+
+It is assumed that all the important logic is contained in the `Reducer`, which means that the testing pipeline can be
+roughly represented as follows:
+
+```kotlin
+val (actualState, actualEvents) = feature.execute(command)
+
+assertEquals(expectedState, actualState)
+
+assertEquals(expectedEvents, actualEvents)
+```
 
 ## Proof of concept
 
