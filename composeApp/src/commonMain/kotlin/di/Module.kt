@@ -10,6 +10,7 @@ import navigation.NavigationFeature
 import navigation.NavigationReducer
 import org.koin.dsl.bind
 import org.koin.dsl.module
+import org.koin.dsl.onClose
 import pokedex.GetPokemons
 import pokedex.PokedexRepository
 import pokedex.filter.*
@@ -41,7 +42,7 @@ private val daily = module {
     factory { GetMaxAttributeValue(get()) }
     factory { GetDailyPokemon(get()) }
     single { DailyReducer(get(), get()) }
-    single { DailyFeature(reducer = get()) }
+    single { DailyFeature(reducer = get()) } onClose { it?.close() }
 }
 
 private val pokedex = module {
@@ -58,7 +59,7 @@ private val pokedex = module {
     single { CardsReducer(get(), get()) }
     single { FilterReducer(get(), get(), get(), get(), get(), get(), get()) }
     single { SortReducer(get(), get()) }
-    single { PokedexFeature(get()) }
+    single { PokedexFeature(get()) } onClose { it?.close() }
 }
 
 internal val appModule = listOf(application, pokemon, navigation, daily, pokedex)
