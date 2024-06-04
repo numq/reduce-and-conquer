@@ -54,15 +54,25 @@ create predictable and testable functional components.
 ```mermaid
 classDiagram
     class Feature {
-        -initialState: State
-        - eventBufferCapacity: Int,
-        -reducer: Reducer<Command, State, Event>
-        -coroutineScope: CoroutineScope
-        -_state: MutableStateFlow<State>
-        -_events: MutableSharedFlow<Event>
-        +state: StateFlow<State>
-        +events: SharedFlow<Event>
-        +execute(command: Command): Boolean
+        - initialState: State
+        - eventBufferCapacity: Int
+        - reducer: Reducer<Command, State, Event>
+        - mutex: Mutex
+        - jobsOnce: MutableMap<Any, Job>
+        - jobsEach: MutableMap<Any, MutableList<Job>>
+        - _state: MutableStateFlow<State>
+        - _events: MutableSharedFlow<Event>
+        + state: StateFlow<State>
+        + events: SharedFlow<Event>
+        + coroutineScope: CoroutineScope
+        + Flow.collectOnce(key: Any): Boolean
+        + Flow.collectLatestOnce(key: Any, action: suspend(T) -> Unit): Boolean
+        + Flow.collectEach(key: Any): Boolean
+        + Flow.collectLatestEach(key: Any, action: suspend(T) -> Unit): Boolean
+        + stopCollecting(key: Any): Boolean
+        + execute(command: Command): Boolean
+        + invokeOnClose(block: suspend() -> Unit)
+        + close()
     }
     class Reducer {
         +suspend reduce(state: State, command: Command): Transition<State, Event>
@@ -109,13 +119,24 @@ An abstract class that takes three type parameters: `Command`, `State` and `Even
 
 #### Properties:
 
-- `initialState`: The initial state of the feature.
-- `eventBufferCapacity`: The buffer capacity for events.
-- `coroutineScope`: A coroutine scope that allows for asynchronous execution.
-- `_state`: A mutable state flow that stores the current state.
-- `_events`: A mutable shared flow that sends events to the outside world.
 - `state`: A read-only state flow that exposes the current state.
 - `events`: A read-only shared flow that exposes the events emitted by the feature.
+- `coroutineScope`: A coroutine scope that allows for asynchronous execution.
+
+#### Methods:
+
+- `Flow<T>.collectOnce(key: Any)`: Collects a flow by assigning a key to the collector. A new collection with
+  the same key **cancels** the previous one.
+- `Flow<T>.collectLatestOnce(key: Any, action: suspend (T) -> Unit)`: Collects latest value by assigning a key
+  to the collector. A new collection with the same key **cancels** the previous one.
+- `Flow<T>.collectEach(key: Any)`: Collects a flow by assigning a key to the collector. A new collection with
+  the same key **does not cancel** the previous one.
+- `Flow<T>.collectLatestEach(key: Any, action: suspend (T) -> Unit)`: Collects latest value by assigning a key
+  to the collector. A new collection with the same key **does not cancel** the previous one.
+- `stopCollecting(key: Any)`: Stops the collector by key, if exists.
+- `execute(command: Command)`: Executes a command and updates the state and emits corresponding events.
+- `invokeOnClose(block: suspend () -> Unit)`: Callback called inside close().
+- `close()`: Cancels ongoing operations and frees resources.
 
 ### Reducer
 
