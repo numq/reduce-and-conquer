@@ -16,15 +16,15 @@ abstract class Feature<in Command, out State, Event>(
 
     private val jobsEach = mutableMapOf<Any, MutableList<Job>>()
 
-    val coroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
-
     private val _state = MutableStateFlow(initialState)
-
-    val state = _state.asStateFlow()
 
     private val _events = MutableSharedFlow<Event>(extraBufferCapacity = eventBufferCapacity)
 
+    val state = _state.asStateFlow()
+
     val events = _events.asSharedFlow()
+
+    val coroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     suspend fun <T> Flow<T>.collectOnce(key: Any): Boolean = runCatching {
         mutex.withLock {
