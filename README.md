@@ -392,6 +392,9 @@ implementation of presentation.
 
 ### Working with data flows
 
+The `Feature` class contains [methods that implement the flow mechanism](#methods), but you can also implement your own
+using the principles described below.
+
 Let's say there is a **command** that calls a **use case**, which returns a `flow` with data that needs to be stored in
 the **state**.
 
@@ -438,12 +441,12 @@ class SearchFeature(reducer: SearchReducer) : Feature<SearchCommand, SearchState
     reducer = reducer
 ) {
     init {
+        events.filterIsInstance<SearchEvent.UserUpdates>().map { event: SearchEvent.UserUpdates ->
+            event.users.collect { user: User ->
+                execute(SearchCommand.AddUser(user = user))
+            }
+        }.launchIn(coroutineScope)
         coroutineScope.launch {
-            events.filterIsInstance<SearchEvent.UserUpdates>().map { event: SearchEvent.UserUpdates ->
-                event.users.collect { user: User ->
-                    execute(SearchCommand.AddUser(user = user))
-                }
-            }.launchIn(this)
             execute(SearchCommand.GetUsers)
         }
     }
