@@ -420,54 +420,54 @@ class GetUsers(private val userRepository: UserRepository) {
     suspend fun execute() = userRepository.getUsers()
 }
 
-sealed interface SearchCommand {
-    data object GetUsers : SearchCommand
-
-    data class AddUser(val user: User) : SearchCommand
+sealed interface UserCommand {
+    data class AddUser(val user: User) : UserCommand
+    
+    data object GetUsers : UserCommand
 }
 
-data class SearchState(
+data class UserState(
     val users: List<User> = emptyList(),
 )
 
-sealed interface SearchEvent : Event {
-    data class Error(val exception: Exception) : SearchEvent
+sealed interface UserEvent : Event {
+    data class Error(val exception: Exception) : UserEvent
 
-    data class UserUpdates(val users: Flow<User>) : SearchEvent
+    data class UserUpdates(val users: Flow<User>) : UserEvent
 }
 
-class SearchFeature(reducer: SearchReducer) : Feature<SearchCommand, SearchState, SearchEvent>(
-    initialState = SearchState(),
-    reducer = reducer
-) {
-    init {
-        events.filterIsInstance<SearchEvent.UserUpdates>().map { event: SearchEvent.UserUpdates ->
-            event.users.collect { user: User ->
-                execute(SearchCommand.AddUser(user = user))
-            }
-        }.launchIn(coroutineScope)
-        coroutineScope.launch {
-            execute(SearchCommand.GetUsers)
-        }
-    }
-}
-
-class SearchReducer(
+class UserReducer(
     private val getUsers: GetUsers,
-) : Reducer<SearchCommand, SearchState, SearchEvent> {
-    override suspend fun reduce(state: SearchState, command: SearchCommand) = when (command) {
-        is SearchCommand.GetUsers -> getUsers.execute().fold(
+) : Reducer<UserCommand, UserState, UserEvent> {
+    override suspend fun reduce(state: UserState, command: UserCommand) = when (command) {
+        is UserCommand.AddUser -> transition(state.copy(users = state.users.plus(user)))
+
+        is UserCommand.GetUsers -> getUsers.execute().fold(
             onSuccess = { users: Flow<User> ->
-                transition(state, SearchEvent.UserUpdates(users = users))
+                transition(state, UserEvent.UserUpdates(users = users))
             },
             onFailure = {
-                transition(state, SearchEvent.Error(Exception(it)))
+                transition(state, UserEvent.Error(Exception(it)))
             }
         )
 
-        is SearchCommand.AddUser -> transition(state.copy(users = state.users.plus(command.user)))
-
         else -> transition(state)
+    }
+}
+
+class UserFeature(reducer: UserReducer) : Feature<UserCommand, UserState, UserEvent>(
+    initialState = UserState(),
+    reducer = reducer
+) {
+    init {
+        events.filterIsInstance<UserEvent.UserUpdates>().map { event: UserEvent.UserUpdates ->
+            event.users.collect { user: User ->
+                execute(UserCommand.AddUser(user = user))
+            }
+        }.launchIn(coroutineScope)
+        coroutineScope.launch {
+            execute(UserCommand.GetUsers)
+        }
     }
 }
 ```
