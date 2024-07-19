@@ -4,6 +4,8 @@
 
 *Reduce. Conquer. Repeat.*
 
+[![medium](https://img.shields.io/badge/Medium-12100E?style=for-the-badge&logo=medium&logoColor=white)](https://medium.com/@numq/reduce-conquer-repeat-how-the-reduce-conquer-architecture-can-improve-your-compose-9fece98a3bb8)
+
 ___
 
 ## Navigation
@@ -422,7 +424,7 @@ class GetUsers(private val userRepository: UserRepository) {
 
 sealed interface UserCommand {
     data class AddUser(val user: User) : UserCommand
-    
+
     data object GetUsers : UserCommand
 }
 
