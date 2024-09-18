@@ -34,14 +34,14 @@ private val pokemon = module {
 }
 
 private val navigation = module {
-    single { NavigationReducer() }
+    factory { NavigationReducer() }
     single { NavigationFeature(reducer = get()) }
 }
 
 private val daily = module {
     factory { GetMaxAttributeValue(get()) }
     factory { GetDailyPokemon(get()) }
-    single { DailyReducer(get(), get()) }
+    factory { DailyReducer(get(), get()) }
     single { DailyFeature(reducer = get()) } onClose { it?.close() }
 }
 
@@ -55,10 +55,10 @@ private val pokedex = module {
     factory { ResetFilter(get()) }
     factory { ResetFilters(get()) }
     factory { ChangeSort(get()) }
-    single { PokedexReducer(get(), get(), get()) }
-    single { CardsReducer(get(), get()) }
-    single { FilterReducer(get(), get(), get(), get(), get(), get(), get()) }
-    single { SortReducer(get(), get()) }
+    factory { PokedexReducer(get(), get(), get()) }
+    factory { CardsReducer(get(), get()) }
+    factory { FilterReducer(get(), get(), get(), get(), get(), get(), get()) }
+    factory { SortReducer(get(), get()) }
     single { PokedexFeature(get()) } onClose { it?.close() }
 }
 
