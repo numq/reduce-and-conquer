@@ -8,7 +8,7 @@ class PokedexFeature(reducer: PokedexReducer) : Feature<PokedexCommand, PokedexS
     reducer = reducer
 ) {
     init {
-        coroutineScope.launch {
+        featureScope.launch {
             if (execute(PokedexCommand.Cards.GetMaxAttributeValue)) {
                 if (execute(PokedexCommand.Filter.InitializeFilters)) {
                     execute(PokedexCommand.Sort.SortPokemons(state.value.sort))

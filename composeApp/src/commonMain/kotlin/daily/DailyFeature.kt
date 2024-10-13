@@ -8,7 +8,7 @@ class DailyFeature(reducer: DailyReducer) : Feature<DailyCommand, DailyState, Da
     reducer = reducer
 ) {
     init {
-        coroutineScope.launch {
+        featureScope.launch {
             if (execute(DailyCommand.GetMaxAttributeValue)) {
                 execute(DailyCommand.GetDailyPokemon)
             }

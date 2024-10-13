@@ -59,23 +59,14 @@ create predictable and testable functional components.
 classDiagram
     class Feature {
         - initialState: State
-        - eventBufferCapacity: Int
         - reducer: Reducer<Command, State, Event>
-        - mutex: Mutex
-        - jobsOnce: MutableMap<Any, Job>
-        - jobsEach: MutableMap<Any, MutableList<Job>>
         - _state: MutableStateFlow<State>
-        - _events: MutableSharedFlow<Event>
+        - _events: Channel<Event>
         + state: StateFlow<State>
-        + events: SharedFlow<Event>
-        + coroutineScope: CoroutineScope
-        + Flow.collectOnce(key: Any): Boolean
-        + Flow.collectLatestOnce(key: Any, action: suspend(T) -> Unit): Boolean
-        + Flow.collectEach(key: Any): Boolean
-        + Flow.collectLatestEach(key: Any, action: suspend(T) -> Unit): Boolean
-        + stopCollecting(key: Any): Boolean
+        + events: Flow<Event>
+        + featureScope: CoroutineScope
         + execute(command: Command): Boolean
-        + invokeOnClose(block: suspend() -> Unit)
+        + invokeOnClose(block: () -> Unit)
         + close()
     }
     class Reducer {
@@ -124,22 +115,12 @@ An abstract class that takes three type parameters: `Command`, `State` and `Even
 #### Properties:
 
 - `state`: A read-only state flow that exposes the current state.
-- `events`: A read-only shared flow that exposes the events emitted by the feature.
-- `coroutineScope`: A coroutine scope that allows for asynchronous execution.
+- `events`: A flow that exposes the events emitted by the feature.
+- `featureScope`: A coroutine scope that allows for asynchronous execution.
 
 #### Methods:
 
-- `Flow<T>.collectOnce(key: Any)`: Collects a flow by assigning a key to the collector. A new collection with
-  the same key **cancels** the previous one.
-- `Flow<T>.collectLatestOnce(key: Any, action: suspend (T) -> Unit)`: Collects latest value by assigning a key
-  to the collector. A new collection with the same key **cancels** the previous one.
-- `Flow<T>.collectEach(key: Any)`: Collects a flow by assigning a key to the collector. A new collection with
-  the same key **does not cancel** the previous one.
-- `Flow<T>.collectLatestEach(key: Any, action: suspend (T) -> Unit)`: Collects latest value by assigning a key
-  to the collector. A new collection with the same key **does not cancel** the previous one.
-- `stopCollecting(key: Any)`: Stops the collector by key, if exists.
 - `execute(command: Command)`: Executes a command and updates the state and emits corresponding events.
-- `invokeOnClose(block: suspend () -> Unit)`: Callback called inside close().
 - `close()`: Cancels ongoing operations and frees resources.
 
 ### Reducer
@@ -468,8 +449,9 @@ class UserFeature(reducer: UserReducer) : Feature<UserCommand, UserState, UserEv
             event.users.collect { user: User ->
                 execute(UserCommand.AddUser(user = user))
             }
-        }.launchIn(coroutineScope)
-        coroutineScope.launch {
+        }.launchIn(featureScope)
+        
+        featureScope.launch {
             execute(UserCommand.GetUsers)
         }
     }
@@ -577,7 +559,7 @@ graph TD
 
 ### Libraries
 
-- Kotlin Compose Multiplatform
+- Jetpack Compose Multiplatform
 - Kotlin Coroutines
 - Kotlin Flow
 - Kotlin Datetime
