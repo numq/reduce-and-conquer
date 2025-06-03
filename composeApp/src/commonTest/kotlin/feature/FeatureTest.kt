@@ -13,8 +13,6 @@ class FeatureTest {
 
     private val testScope = TestScope(testDispatcher)
 
-    private val events = mutableListOf<TestEvent>()
-
     private lateinit var feature: Feature<TestCommand, TestState, TestEvent>
 
     @BeforeTest
@@ -22,38 +20,49 @@ class FeatureTest {
         Dispatchers.setMain(testDispatcher)
 
         feature = object : Feature<TestCommand, TestState, TestEvent>(
-            initialState = TestState(0), reducer = TestReducer()
+            initialState = TestState(0), coroutineScope = testScope, reducer = TestReducer()
         ) {}
-
-        feature.events.onEach { event ->
-            events.add(event)
-        }.launchIn(testScope)
     }
 
     @AfterTest
     fun tearDown() {
         Dispatchers.resetMain()
-
-        events.clear()
     }
 
     @Test
     fun updateStateAndEmitEvent() = runTest {
-        assertEquals(0, feature.state.value.count)
+        val states = buildList {
+            feature.state.onEach { state ->
+                add(state)
+            }.launchIn(testScope)
+        }
+
+        val events = buildList {
+            feature.events.onEach { event ->
+                add(event)
+            }.launchIn(testScope)
+        }
+
+        advanceUntilIdle()
 
         assertTrue(feature.execute(TestCommand.Increment))
-        assertEquals(1, feature.state.value.count)
+
+        advanceUntilIdle()
 
         assertTrue(feature.execute(TestCommand.Decrement))
-        assertEquals(0, feature.state.value.count)
+
+        advanceUntilIdle()
 
         assertTrue(feature.execute(TestCommand.IncrementByTwo))
-        assertEquals(2, feature.state.value.count)
+
+        advanceUntilIdle()
 
         assertTrue(feature.execute(TestCommand.DecrementByTwo))
-        assertEquals(0, feature.state.value.count)
 
-        testDispatcher.scheduler.advanceUntilIdle()
+        advanceUntilIdle()
+
+        assertEquals(listOf(0, 1, 0, 2, 0), states.map(TestState::count))
+
         assertEquals(
             listOf(
                 TestEvent.Incremented,

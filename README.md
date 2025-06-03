@@ -59,12 +59,15 @@ create predictable and testable functional components.
 classDiagram
     class Feature {
         - initialState: State
+        + coroutineScope: CoroutineScope
+        - commandsCapacity: Int = Channel.UNLIMITED
         - reducer: Reducer<Command, State, Event>
+        - commands: Channel<Command> = Channel(Channel.UNLIMITED)
         - _state: MutableStateFlow<State>
         - _events: Channel<Event>
         + state: StateFlow<State>
         + events: Flow<Event>
-        + featureScope: CoroutineScope
+        + tryExecute(command: Command): Boolean
         + execute(command: Command): Boolean
         + invokeOnClose(block: () -> Unit)
         + close()
@@ -116,12 +119,27 @@ An abstract class that takes three type parameters: `Command`, `State` and `Even
 
 - `state`: A read-only state flow that exposes the current state.
 - `events`: A flow that exposes the events emitted by the feature.
-- `featureScope`: A coroutine scope that allows for asynchronous execution.
+- `coroutineScope`: A coroutine scope that allows for asynchronous execution.
 
 #### Methods:
 
-- `execute(command: Command)`: Executes a command and updates the state and emits corresponding events.
-- `close()`: Cancels ongoing operations and frees resources.
+- `tryExecute(command: Command): Boolean`  
+  Non-blocking command submission. Best for interactions where suspension isn't possible. Returns:
+    - `true` - Command successfully queued
+    - `false` - Channel at capacity (immediate failure)
+
+
+- `suspend execute(command: Command): Boolean`  
+  Suspending command submission. Guarantees ordered processing when channel has capacity. Returns:
+    - `true` - Command accepted for processing
+    - `false` - Channel closed or cancelled
+
+
+- `close()`  
+  Terminates all operations:
+    - Cancels coroutine scope
+    - Closes command/event channels
+    - Invokes optional cleanup via `invokeOnClose`
 
 ### Reducer
 
@@ -449,9 +467,9 @@ class UserFeature(reducer: UserReducer) : Feature<UserCommand, UserState, UserEv
             event.users.collect { user: User ->
                 execute(UserCommand.AddUser(user = user))
             }
-        }.launchIn(featureScope)
-        
-        featureScope.launch {
+        }.launchIn(coroutineScope)
+
+        coroutineScope.launch {
             execute(UserCommand.GetUsers)
         }
     }

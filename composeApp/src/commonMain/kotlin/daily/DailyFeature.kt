@@ -1,14 +1,16 @@
 package daily
 
 import feature.Feature
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-class DailyFeature(reducer: DailyReducer) : Feature<DailyCommand, DailyState, DailyEvent>(
-    initialState = DailyState(),
-    reducer = reducer
+class DailyFeature(
+    coroutineScope: CoroutineScope, reducer: DailyReducer
+) : Feature<DailyCommand, DailyState, DailyEvent>(
+    initialState = DailyState(), coroutineScope = coroutineScope, reducer = reducer
 ) {
     init {
-        featureScope.launch {
+        coroutineScope.launch {
             if (execute(DailyCommand.GetMaxAttributeValue)) {
                 execute(DailyCommand.GetDailyPokemon)
             }

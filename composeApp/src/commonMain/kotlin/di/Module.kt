@@ -5,6 +5,8 @@ import daily.DailyReducer
 import daily.GetDailyPokemon
 import daily.GetMaxAttributeValue
 import file.FileProvider
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.json.Json
 import navigation.NavigationFeature
 import navigation.NavigationReducer
@@ -35,14 +37,19 @@ private val pokemon = module {
 
 private val navigation = module {
     factory { NavigationReducer() }
-    single { NavigationFeature(reducer = get()) }
+    single { NavigationFeature(coroutineScope = CoroutineScope(Dispatchers.Default), reducer = get()) }
 }
 
 private val daily = module {
     factory { GetMaxAttributeValue(get()) }
     factory { GetDailyPokemon(get()) }
     factory { DailyReducer(get(), get()) }
-    single { DailyFeature(reducer = get()) } onClose { it?.close() }
+    single {
+        DailyFeature(
+            coroutineScope = CoroutineScope(Dispatchers.Default),
+            reducer = get()
+        )
+    } onClose { it?.close() }
 }
 
 private val pokedex = module {
@@ -59,7 +66,12 @@ private val pokedex = module {
     factory { CardsReducer(get(), get()) }
     factory { FilterReducer(get(), get(), get(), get(), get(), get(), get()) }
     factory { SortReducer(get(), get()) }
-    single { PokedexFeature(get()) } onClose { it?.close() }
+    single {
+        PokedexFeature(
+            coroutineScope = CoroutineScope(Dispatchers.Default),
+            reducer = get()
+        )
+    } onClose { it?.close() }
 }
 
 internal val appModule = listOf(application, pokemon, navigation, daily, pokedex)
