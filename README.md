@@ -1,4 +1,4 @@
-<a href="https://www.buymeacoffee.com/numq"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a one way ticket&emoji=✈️&slug=numq&button_colour=5F7FFF&font_colour=ffffff&font_family=Inter&outline_colour=000000&coffee_colour=FFDD00" /></a>
+<a href="coff.ee/numq"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=numq&button_colour=17517e&font_colour=ffffff&font_family=Inter&outline_colour=000000&coffee_colour=FFDD00" /></a>
 
 # Reduce & Conquer
 
@@ -60,15 +60,14 @@ classDiagram
     class Feature {
         - initialState: State
         + coroutineScope: CoroutineScope
-        - commandsCapacity: Int = Channel.UNLIMITED
         - reducer: Reducer<Command, State, Event>
-        - commands: Channel<Command> = Channel(Channel.UNLIMITED)
         - _state: MutableStateFlow<State>
         - _events: Channel<Event>
+        - _commands: Channel<Command> = Channel(Channel.RENDEZVOUS)
         + state: StateFlow<State>
         + events: Flow<Event>
         + tryExecute(command: Command): Boolean
-        + execute(command: Command): Boolean
+        + execute(command: Command)
         + invokeOnClose(block: () -> Unit)
         + close()
     }
@@ -129,10 +128,8 @@ An abstract class that takes three type parameters: `Command`, `State` and `Even
     - `false` - Channel at capacity (immediate failure)
 
 
-- `suspend execute(command: Command): Boolean`  
-  Suspending command submission. Guarantees ordered processing when channel has capacity. Returns:
-    - `true` - Command accepted for processing
-    - `false` - Channel closed or cancelled
+- `suspend execute(command: Command)`  
+  Suspending command submission. Guarantees ordered processing when channel has capacity.
 
 
 - `close()`  
