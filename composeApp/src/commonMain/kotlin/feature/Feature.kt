@@ -8,9 +8,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 
 abstract class Feature<in Command, State, Event>(
-    initialState: State,
-    private val coroutineScope: CoroutineScope,
-    private val reducer: Reducer<Command, State, Event>
+    initialState: State, private val coroutineScope: CoroutineScope, private val reducer: Reducer<Command, State, Event>
 ) {
     private val _state = MutableStateFlow(initialState)
     val state = _state.asStateFlow()
