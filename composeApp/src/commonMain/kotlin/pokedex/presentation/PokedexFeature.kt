@@ -14,11 +14,11 @@ class PokedexFeature(
 ) {
     init {
         coroutineScope.launch {
-            if (execute(PokedexCommand.Cards.GetMaxAttributeValue)) {
-                if (execute(PokedexCommand.Filter.InitializeFilters)) {
-                    execute(PokedexCommand.Sort.SortPokemons(state.value.sort))
-                }
-            }
+            execute(PokedexCommand.Cards.GetMaxAttributeValue)
+
+            execute(PokedexCommand.Filter.InitializeFilters)
+
+            execute(PokedexCommand.Sort.SortPokemons(state.value.sort))
         }
     }
 }

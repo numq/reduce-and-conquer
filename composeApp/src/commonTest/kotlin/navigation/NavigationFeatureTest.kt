@@ -3,7 +3,10 @@ package navigation
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.*
-import kotlin.test.*
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertIs
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class NavigationFeatureTest {
@@ -22,6 +25,8 @@ class NavigationFeatureTest {
 
     @AfterTest
     fun tearDown() {
+        feature.close()
+
         Dispatchers.resetMain()
     }
 
@@ -29,13 +34,13 @@ class NavigationFeatureTest {
     fun changeDestination() = runTest {
         assertIs<NavigationState.Daily>(feature.state.value)
 
-        assertTrue(feature.execute(NavigationCommand.NavigateToPokedex))
+        feature.execute(NavigationCommand.NavigateToPokedex)
 
         advanceUntilIdle()
 
         assertIs<NavigationState.Pokedex>(feature.state.value)
 
-        assertTrue(feature.execute(NavigationCommand.NavigateToDaily))
+        feature.execute(NavigationCommand.NavigateToDaily)
 
         advanceUntilIdle()
 

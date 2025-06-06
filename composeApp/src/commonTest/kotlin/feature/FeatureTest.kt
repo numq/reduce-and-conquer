@@ -5,7 +5,10 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.test.*
-import kotlin.test.*
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class FeatureTest {
@@ -26,38 +29,42 @@ class FeatureTest {
 
     @AfterTest
     fun tearDown() {
+        feature.close()
+
         Dispatchers.resetMain()
     }
 
     @Test
     fun updateStateAndEmitEvent() = runTest {
-        val states = buildList {
-            feature.state.onEach { state ->
-                add(state)
-            }.launchIn(testScope)
-        }
+        val states = mutableListOf<TestState>()
 
-        val events = buildList {
-            feature.events.onEach { event ->
-                add(event)
-            }.launchIn(testScope)
-        }
+        feature.state.onEach { state ->
+            states.add(state)
+        }.launchIn(testScope)
 
         advanceUntilIdle()
 
-        assertTrue(feature.execute(TestCommand.Increment))
+        val events = mutableListOf<TestEvent>()
+
+        feature.events.onEach { event ->
+            events.add(event)
+        }.launchIn(testScope)
 
         advanceUntilIdle()
 
-        assertTrue(feature.execute(TestCommand.Decrement))
+        feature.execute(TestCommand.Increment)
 
         advanceUntilIdle()
 
-        assertTrue(feature.execute(TestCommand.IncrementByTwo))
+        feature.execute(TestCommand.Decrement)
 
         advanceUntilIdle()
 
-        assertTrue(feature.execute(TestCommand.DecrementByTwo))
+        feature.execute(TestCommand.IncrementByTwo)
+
+        advanceUntilIdle()
+
+        feature.execute(TestCommand.DecrementByTwo)
 
         advanceUntilIdle()
 

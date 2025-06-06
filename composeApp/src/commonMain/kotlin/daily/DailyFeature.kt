@@ -11,9 +11,9 @@ class DailyFeature(
 ) {
     init {
         coroutineScope.launch {
-            if (execute(DailyCommand.GetMaxAttributeValue)) {
-                execute(DailyCommand.GetDailyPokemon)
-            }
+            execute(DailyCommand.GetMaxAttributeValue)
+
+            execute(DailyCommand.GetDailyPokemon)
         }
     }
 }

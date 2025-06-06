@@ -9,7 +9,10 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.*
 import pokemon.PokemonProvider
 import pokemon.toPokemon
-import kotlin.test.*
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DailyFeatureTest {
@@ -48,6 +51,8 @@ class DailyFeatureTest {
 
     @AfterTest
     fun tearDown() {
+        feature.close()
+
         Dispatchers.resetMain()
 
         clearAllMocks()
@@ -55,7 +60,7 @@ class DailyFeatureTest {
 
     @Test
     fun returnMaxAttribute() = runTest {
-        assertTrue(feature.execute(DailyCommand.GetMaxAttributeValue))
+        feature.execute(DailyCommand.GetMaxAttributeValue)
 
         advanceUntilIdle()
 
@@ -64,7 +69,7 @@ class DailyFeatureTest {
 
     @Test
     fun returnDailyPokemon() = runTest {
-        assertTrue(feature.execute(DailyCommand.GetDailyPokemon))
+        feature.execute(DailyCommand.GetDailyPokemon)
 
         advanceUntilIdle()
 

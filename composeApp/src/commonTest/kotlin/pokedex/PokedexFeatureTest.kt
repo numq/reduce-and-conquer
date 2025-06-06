@@ -49,39 +49,45 @@ class PokedexFeatureTest {
 
     private val changeSort: ChangeSort = mockk()
 
+    private val cardsReducer = CardsReducer(getMaxAttributeValue = getMaxAttributeValue, getPokemons = getPokemons)
+
+    private val filterReducer = FilterReducer(
+        cardsReducer = cardsReducer,
+        initializeFilters = initializeFilters,
+        getFilters = getFilters,
+        selectFilter = selectFilter,
+        updateFilter = updateFilter,
+        resetFilter = resetFilter,
+        resetFilters = resetFilters
+    )
+
+    private val sortReducer = SortReducer(
+        cardsReducer = cardsReducer, changeSort = changeSort
+    )
+
+    private val pokedexReducer = PokedexReducer(
+        cardsReducer = cardsReducer, filterReducer = filterReducer, sortReducer = sortReducer
+    )
+
     private lateinit var feature: PokedexFeature
 
     @BeforeTest
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
 
-        val cardsReducer = CardsReducer(
-            getMaxAttributeValue = getMaxAttributeValue, getPokemons = getPokemons
-        )
+        coEvery { getMaxAttributeValue.execute(Unit) } coAnswers { Result.success(MAX_ATTRIBUTE_VALUE) }
 
-        val filterReducer = FilterReducer(
-            cardsReducer = cardsReducer,
-            initializeFilters = initializeFilters,
-            getFilters = getFilters,
-            selectFilter = selectFilter,
-            updateFilter = updateFilter,
-            resetFilter = resetFilter,
-            resetFilters = resetFilters
-        )
+        coEvery { initializeFilters.execute(Unit) } coAnswers { Result.success(Unit) }
 
-        val sortReducer = SortReducer(
-            cardsReducer = cardsReducer, changeSort = changeSort
-        )
-
-        val pokedexReducer = PokedexReducer(
-            cardsReducer = cardsReducer, filterReducer = filterReducer, sortReducer = sortReducer
-        )
+        coEvery { getPokemons.execute(any()) } coAnswers { Result.success(pokemons) }
 
         feature = PokedexFeature(coroutineScope = testScope, reducer = pokedexReducer)
     }
 
     @AfterTest
     fun tearDown() {
+        feature.close()
+
         Dispatchers.resetMain()
 
         clearAllMocks()
@@ -89,9 +95,7 @@ class PokedexFeatureTest {
 
     @Test
     fun returnMaxAttributeValue() = runTest {
-        coEvery { getMaxAttributeValue.execute(Unit) } coAnswers { Result.success(MAX_ATTRIBUTE_VALUE) }
-
-        assertTrue(feature.execute(PokedexCommand.Cards.GetMaxAttributeValue))
+        feature.execute(PokedexCommand.Cards.GetMaxAttributeValue)
 
         advanceUntilIdle()
 
@@ -102,9 +106,7 @@ class PokedexFeatureTest {
     fun returnPokemons() = runTest {
         coEvery { getFilters.execute(Unit) } coAnswers { Result.success(emptyList()) }
 
-        coEvery { getPokemons.execute(any()) } coAnswers { Result.success(pokemons) }
-
-        assertTrue(feature.execute(PokedexCommand.Cards.GetCards(0, pokemons.size.toLong())))
+        feature.execute(PokedexCommand.Cards.GetCards(0, pokemons.size.toLong()))
 
         advanceUntilIdle()
 
@@ -113,9 +115,7 @@ class PokedexFeatureTest {
 
     @Test
     fun loadMorePokemons() = runTest {
-        coEvery { getPokemons.execute(any()) } coAnswers { Result.success(pokemons) }
-
-        assertTrue(feature.execute(PokedexCommand.Cards.LoadMoreCards))
+        feature.execute(PokedexCommand.Cards.LoadMoreCards)
 
         advanceUntilIdle()
 
@@ -124,9 +124,7 @@ class PokedexFeatureTest {
 
     @Test
     fun initializeFilters() = runTest {
-        coEvery { initializeFilters.execute(Unit) } coAnswers { Result.success(Unit) }
-
-        assertTrue(feature.execute(PokedexCommand.Filter.InitializeFilters))
+        feature.execute(PokedexCommand.Filter.InitializeFilters)
 
         advanceUntilIdle()
 
@@ -135,13 +133,13 @@ class PokedexFeatureTest {
 
     @Test
     fun toggleFilterMode() = runTest {
-        assertTrue(feature.execute(PokedexCommand.Filter.ToggleFilterMode))
+        feature.execute(PokedexCommand.Filter.ToggleFilterMode)
 
         advanceUntilIdle()
 
         assertEquals(PokedexInteractionMode.FILTER, feature.state.value.interactionMode)
 
-        assertTrue(feature.execute(PokedexCommand.Filter.ToggleFilterMode))
+        feature.execute(PokedexCommand.Filter.ToggleFilterMode)
 
         advanceUntilIdle()
 
@@ -160,7 +158,7 @@ class PokedexFeatureTest {
 
         coEvery { selectFilter.execute(any()) } coAnswers { Result.success(filter) }
 
-        assertTrue(feature.execute(PokedexCommand.Filter.SelectFilter(criteria)))
+        feature.execute(PokedexCommand.Filter.SelectFilter(criteria))
 
         advanceUntilIdle()
 
@@ -173,19 +171,15 @@ class PokedexFeatureTest {
 
         val updatedFilter = filter.copy(modified = "modified")
 
-        coEvery { initializeFilters.execute(Unit) } coAnswers { Result.success(Unit) }
-
-        coEvery { getPokemons.execute(any()) } coAnswers { Result.success(pokemons) }
-
         coEvery { getFilters.execute(Unit) } coAnswers { Result.success(listOf(filter)) }
 
         coEvery { updateFilter.execute(any()) } coAnswers { Result.success(updatedFilter) }
 
-        assertTrue(feature.execute(PokedexCommand.Filter.InitializeFilters))
+        feature.execute(PokedexCommand.Filter.InitializeFilters)
 
         advanceUntilIdle()
 
-        assertTrue(feature.execute(PokedexCommand.Filter.UpdateFilter(updatedFilter)))
+        feature.execute(PokedexCommand.Filter.UpdateFilter(updatedFilter))
 
         advanceUntilIdle()
 
@@ -200,19 +194,15 @@ class PokedexFeatureTest {
 
         val updatedFilter = filter.copy(modified = setOf(Pokemon.Type.ICE, Pokemon.Type.FIRE, Pokemon.Type.WATER))
 
-        coEvery { initializeFilters.execute(Unit) } coAnswers { Result.success(Unit) }
-
-        coEvery { getPokemons.execute(any()) } coAnswers { Result.success(pokemons) }
-
         coEvery { getFilters.execute(Unit) } coAnswers { Result.success(listOf(filter)) }
 
         coEvery { updateFilter.execute(any()) } coAnswers { Result.success(updatedFilter) }
 
-        assertTrue(feature.execute(PokedexCommand.Filter.InitializeFilters))
+        feature.execute(PokedexCommand.Filter.InitializeFilters)
 
         advanceUntilIdle()
 
-        assertTrue(feature.execute(PokedexCommand.Filter.UpdateFilter(updatedFilter)))
+        feature.execute(PokedexCommand.Filter.UpdateFilter(updatedFilter))
 
         advanceUntilIdle()
 
@@ -229,19 +219,15 @@ class PokedexFeatureTest {
 
         val updatedFilter = filter.copy(modified = 25..50)
 
-        coEvery { initializeFilters.execute(Unit) } coAnswers { Result.success(Unit) }
-
-        coEvery { getPokemons.execute(any()) } coAnswers { Result.success(pokemons) }
-
         coEvery { getFilters.execute(Unit) } coAnswers { Result.success(listOf(filter)) }
 
         coEvery { updateFilter.execute(any()) } coAnswers { Result.success(updatedFilter) }
 
-        assertTrue(feature.execute(PokedexCommand.Filter.InitializeFilters))
+        feature.execute(PokedexCommand.Filter.InitializeFilters)
 
         advanceUntilIdle()
 
-        assertTrue(feature.execute(PokedexCommand.Filter.UpdateFilter(updatedFilter)))
+        feature.execute(PokedexCommand.Filter.UpdateFilter(updatedFilter))
 
         advanceUntilIdle()
 
@@ -258,8 +244,6 @@ class PokedexFeatureTest {
 
         val updatedFilter = filter.copy(modified = (25..50))
 
-        coEvery { getPokemons.execute(any()) } coAnswers { Result.success(pokemons) }
-
         coEvery { getFilters.execute(Unit) } coAnswers { Result.success(emptyList()) }
 
         coEvery { selectFilter.execute(any()) } coAnswers { Result.success(filter) }
@@ -268,19 +252,19 @@ class PokedexFeatureTest {
 
         coEvery { resetFilter.execute(any()) } coAnswers { Result.success(firstArg()) }
 
-        assertTrue(feature.execute(PokedexCommand.Filter.SelectFilter(filter.criteria)))
+        feature.execute(PokedexCommand.Filter.SelectFilter(filter.criteria))
 
         advanceUntilIdle()
 
-        assertTrue(feature.execute(PokedexCommand.Filter.UpdateFilter(updatedFilter)))
+        feature.execute(PokedexCommand.Filter.UpdateFilter(updatedFilter))
 
         advanceUntilIdle()
 
-        assertTrue(feature.execute(PokedexCommand.Filter.ResetFilter(filter.criteria)))
+        feature.execute(PokedexCommand.Filter.ResetFilter(filter.criteria))
 
         advanceUntilIdle()
 
-        assertTrue(feature.execute(PokedexCommand.Filter.CloseFilter))
+        feature.execute(PokedexCommand.Filter.CloseFilter)
 
         advanceUntilIdle()
 
@@ -299,11 +283,11 @@ class PokedexFeatureTest {
 
         coEvery { selectFilter.execute(any()) } coAnswers { Result.success(filter) }
 
-        assertTrue(feature.execute(PokedexCommand.Filter.SelectFilter(filter.criteria)))
+        feature.execute(PokedexCommand.Filter.SelectFilter(filter.criteria))
 
         advanceUntilIdle()
 
-        assertTrue(feature.execute(PokedexCommand.Filter.CloseFilter))
+        feature.execute(PokedexCommand.Filter.CloseFilter)
 
         advanceUntilIdle()
 
@@ -318,7 +302,7 @@ class PokedexFeatureTest {
 
         coEvery { selectFilter.execute(any()) } coAnswers { Result.success(filter) }
 
-        assertTrue(feature.execute(PokedexCommand.Filter.ResetFilters))
+        feature.execute(PokedexCommand.Filter.ResetFilters)
 
         advanceUntilIdle()
 
@@ -331,13 +315,13 @@ class PokedexFeatureTest {
 
     @Test
     fun toggleSortMode() = runTest {
-        assertTrue(feature.execute(PokedexCommand.Sort.ToggleSortMode))
+        feature.execute(PokedexCommand.Sort.ToggleSortMode)
 
         advanceUntilIdle()
 
         assertEquals(PokedexInteractionMode.SORT, feature.state.value.interactionMode)
 
-        assertTrue(feature.execute(PokedexCommand.Sort.ToggleSortMode))
+        feature.execute(PokedexCommand.Sort.ToggleSortMode)
 
         advanceUntilIdle()
 
@@ -348,13 +332,11 @@ class PokedexFeatureTest {
     fun sortPokemons() = runTest {
         val sort = PokedexSort(criteria = PokedexSort.Criteria.HP, isAscending = true)
 
-        coEvery { getPokemons.execute(any()) } coAnswers { Result.success(pokemons) }
-
         coEvery { getFilters.execute(Unit) } coAnswers { Result.success(emptyList()) }
 
         coEvery { changeSort.execute(any()) } coAnswers { Result.success(firstArg()) }
 
-        assertTrue(feature.execute(PokedexCommand.Sort.SortPokemons(sort)))
+        feature.execute(PokedexCommand.Sort.SortPokemons(sort))
 
         advanceUntilIdle()
 
