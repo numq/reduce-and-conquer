@@ -59,15 +59,16 @@ create predictable and testable functional components.
 classDiagram
     class Feature {
         - initialState: State
-        + coroutineScope: CoroutineScope
+        - coroutineScope: CoroutineScope
         - reducer: Reducer<Command, State, Event>
         - _state: MutableStateFlow<State>
         - _events: Channel<Event>
         - _commands: Channel<Command> = Channel(Channel.RENDEZVOUS)
         + state: StateFlow<State>
         + events: Flow<Event>
-        + tryExecute(command: Command): Boolean
         + execute(command: Command)
+        + executeAsync(command: Command)
+        + tryExecuteAsync(command: Command): Boolean
         + invokeOnClose(block: () -> Unit)
         + close()
     }
@@ -118,18 +119,11 @@ An abstract class that takes three type parameters: `Command`, `State` and `Even
 
 - `state`: A read-only state flow that exposes the current state.
 - `events`: A flow that exposes the events emitted by the feature.
-- `coroutineScope`: A coroutine scope that allows for asynchronous execution.
 
 #### Methods:
 
-- `tryExecute(command: Command): Boolean`  
-  Non-blocking command submission. Best for interactions where suspension isn't possible. Returns:
-    - `true` - Command successfully queued
-    - `false` - Channel at capacity (immediate failure)
-
-
 - `suspend execute(command: Command)`  
-  Suspending command submission. Guarantees ordered processing when channel has capacity.
+  Suspending command submission. Use this method when the result of the command is important.
 
 
 - `close()`  
