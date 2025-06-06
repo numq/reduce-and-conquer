@@ -59,8 +59,9 @@ create predictable and testable functional components.
 classDiagram
     class Feature {
         - initialState: State
-        - coroutineScope: CoroutineScope
-        - reducer: Reducer<Command, State, Event>
+        - _coroutineScope: CoroutineScope
+        - _reducer: Reducer<Command, State, Event>
+        - _mutex: Mutex
         - _state: MutableStateFlow<State>
         - _events: Channel<Event>
         + state: StateFlow<State>
