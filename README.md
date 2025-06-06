@@ -63,12 +63,9 @@ classDiagram
         - reducer: Reducer<Command, State, Event>
         - _state: MutableStateFlow<State>
         - _events: Channel<Event>
-        - _commands: Channel<Command> = Channel(Channel.RENDEZVOUS)
         + state: StateFlow<State>
         + events: Flow<Event>
         + execute(command: Command)
-        + executeAsync(command: Command)
-        + tryExecuteAsync(command: Command): Boolean
         + invokeOnClose(block: () -> Unit)
         + close()
     }
