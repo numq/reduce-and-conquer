@@ -41,6 +41,7 @@ ___
 - [Proof of concept](#proof-of-concept)
     - [Features](#features)
     - [Libraries](#libraries)
+- [More examples](#more-examples)
 
 ## About
 
@@ -575,3 +576,7 @@ graph TD
 - Kotlin Multiplatform UUID
 - Kotlin Coroutines Test
 - Mockk
+
+## More examples
+
+- [Klarity](https://github.com/numq/Klarity) - Jetpack Compose Desktop media player library demonstration (example) project
