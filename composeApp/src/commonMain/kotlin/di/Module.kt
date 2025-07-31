@@ -36,14 +36,14 @@ private val pokemon = module {
 }
 
 private val navigation = module {
-    factory { NavigationReducer() }
+    single { NavigationReducer() }
     single { NavigationFeature(coroutineScope = CoroutineScope(Dispatchers.Default), reducer = get()) }
 }
 
 private val daily = module {
-    factory { GetMaxAttributeValue(get()) }
-    factory { GetDailyPokemon(get()) }
-    factory { DailyReducer(get(), get()) }
+    single { GetMaxAttributeValue(get()) }
+    single { GetDailyPokemon(get()) }
+    single { DailyReducer(get(), get()) }
     single {
         DailyFeature(
             coroutineScope = CoroutineScope(Dispatchers.Default),
@@ -54,18 +54,18 @@ private val daily = module {
 
 private val pokedex = module {
     single { PokedexRepository.Implementation() } bind PokedexRepository::class
-    factory { GetPokemons(get(), get()) }
-    factory { InitializeFilters(get(), get()) }
-    factory { GetFilters(get()) }
-    factory { SelectFilter(get()) }
-    factory { UpdateFilter(get()) }
-    factory { ResetFilter(get()) }
-    factory { ResetFilters(get()) }
-    factory { ChangeSort(get()) }
-    factory { PokedexReducer(get(), get(), get()) }
-    factory { CardsReducer(get(), get()) }
-    factory { FilterReducer(get(), get(), get(), get(), get(), get(), get()) }
-    factory { SortReducer(get(), get()) }
+    single { GetPokemons(get(), get()) }
+    single { InitializeFilters(get(), get()) }
+    single { GetFilters(get()) }
+    single { SelectFilter(get()) }
+    single { UpdateFilter(get()) }
+    single { ResetFilter(get()) }
+    single { ResetFilters(get()) }
+    single { ChangeSort(get()) }
+    single { PokedexReducer(get(), get(), get()) }
+    single { CardsReducer(get(), get()) }
+    single { FilterReducer(get(), get(), get(), get(), get(), get(), get()) }
+    single { SortReducer(get(), get()) }
     single {
         PokedexFeature(
             coroutineScope = CoroutineScope(Dispatchers.Default),
