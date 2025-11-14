@@ -273,6 +273,7 @@ Enhanced event system with built-in error handling and lifecycle management.
 
 ```kotlin
 // Collect flows in feature
+
 events.collect { event ->
     when (event) {
         is UserEvent.ObserveUsers -> collect(
@@ -283,6 +284,7 @@ events.collect { event ->
 }
 
 // Handle different event types in Composable
+
 val event by feature.events.collectAsState(null)
 
 LaunchedEffect(event) {
