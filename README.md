@@ -78,7 +78,7 @@ create predictable and testable functional components.
 
 ```mermaid
 classDiagram
-    class Feature {
+    class Feature~Command, State~ {
         <<interface>>
         +StateFlow~State~ state
         +Flow~Event~ events
@@ -92,30 +92,32 @@ classDiagram
         +close()*
     }
     
-    class BaseFeature {
+    class BaseFeature~Command, State~ {
         -Reducer~Command, State~ reducer
         -CommandProcessor~Command~ commandProcessor
+        -MutableStateFlow~State~ _state
+        -Channel~Event~ _events
         -perform(command: Command)
         -dispatchFailure(throwable: Throwable)
     }
     
-    class Reducer {
+    class Reducer~Command, State~ {
         <<interface>>
         +reduce(state: State, command: Command): Transition~State~*
         +transition(state: State, vararg event: Event): Transition~State~
     }
     
-    class Transition {
+    class Transition~State~ {
         +State state
         +List~Event~ events
         +withEvents(block): Transition~State~
     }
     
-    class CommandProcessor {
+    class CommandProcessor~Command~ {
         <<interface>>
         +Int activeOperations
         +((suspend (Throwable) -> Unit))? onFailure
-        +process(action)*
+        +process(action: CommandProcessorAction~Command~)*
         +close()*
     }
     
@@ -125,7 +127,13 @@ classDiagram
         +Instant timestamp
     }
     
-    class MetricsFeature {
+    class Event_Collectable~T~ {
+        <<abstract>>
+        +Any key
+        +Flow~T~ flow
+    }
+    
+    class MetricsFeature~Command, State~ {
         -Feature~Command, State~ feature
         -MetricsCollector~Command~ metricsCollector
         +execute(command)*
@@ -134,14 +142,29 @@ classDiagram
     class FeatureFactory {
         +create(initialState, reducer, strategy, ...): Feature~Command, State~
     }
+    
+    class CommandProcessorAction~Command~ {
+        +Command command
+        +((suspend (Command) -> Unit)) block
+    }
+    
+    class MetricsCollector~Command~ {
+        <<interface>>
+        +recordSuccess(command, duration)*
+        +recordFailure(command, duration, throwable)*
+    }
 
     Feature <|.. BaseFeature
     BaseFeature --> Reducer
     BaseFeature --> CommandProcessor
+    BaseFeature --> Event
     Feature <|.. MetricsFeature
+    MetricsFeature --> Feature : delegates to
     MetricsFeature --> MetricsCollector
     FeatureFactory --> BaseFeature
     FeatureFactory --> CommandProcessor
+    CommandProcessor --> CommandProcessorAction
+    Event <|-- Event_Collectable
 ```
 
 ## State
