@@ -29,7 +29,7 @@ import reduce_and_conquer.composeapp.generated.resources.daily_pokemon_of_the_da
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
-fun DailyView(feature: DailyFeature) {
+internal fun DailyView(feature: DailyFeature) {
     val coroutineScope = rememberCoroutineScope()
 
     val notificationQueue = rememberNotificationQueue()

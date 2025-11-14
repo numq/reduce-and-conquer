@@ -4,11 +4,11 @@ import feature.Reducer
 import pokedex.presentation.filter.FilterReducer
 import pokedex.presentation.sort.SortReducer
 
-class PokedexReducer(
+internal class PokedexReducer(
     private val cardsReducer: CardsReducer,
     private val filterReducer: FilterReducer,
     private val sortReducer: SortReducer,
-) : Reducer<PokedexCommand, PokedexState, PokedexEvent> {
+) : Reducer<PokedexCommand, PokedexState> {
     override suspend fun reduce(state: PokedexState, command: PokedexCommand) = when (command) {
         is PokedexCommand.Cards -> cardsReducer.reduce(state, command)
 

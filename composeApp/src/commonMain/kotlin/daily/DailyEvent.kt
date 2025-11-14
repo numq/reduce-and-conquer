@@ -1,12 +1,20 @@
 package daily
 
-import com.benasher44.uuid.Uuid
-import com.benasher44.uuid.uuid4
-import event.Event
+import feature.Event
+import kotlinx.datetime.Clock
 
-sealed interface DailyEvent : Event<Uuid> {
-    sealed class Error(val message: String, override val key: Uuid = uuid4()) : DailyEvent {
-        data class GetMaxAttributeValue(override val key: Uuid = uuid4()) : Error("Unable to get max attribute value")
-        data class GetDailyPokemon(override val key: Uuid = uuid4()) : Error("Unable to get daily pokemon")
+internal sealed interface DailyEvent : Event {
+    sealed class Error(val message: String) : DailyEvent {
+        data object GetMaxAttributeValue : Error("Unable to get max attribute value") {
+            override val payload = null
+
+            override val timestamp = Clock.System.now()
+        }
+
+        data object GetDailyPokemon : Error("Unable to get daily pokemon") {
+            override val payload = null
+
+            override val timestamp = Clock.System.now()
+        }
     }
 }

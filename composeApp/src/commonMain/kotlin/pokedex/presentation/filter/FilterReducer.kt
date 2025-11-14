@@ -1,11 +1,10 @@
 package pokedex.presentation.filter
 
 import feature.Reducer
-import feature.mergeEvents
 import pokedex.filter.*
 import pokedex.presentation.*
 
-class FilterReducer(
+internal class FilterReducer(
     private val cardsReducer: CardsReducer,
     private val initializeFilters: InitializeFilters,
     private val getFilters: GetFilters,
@@ -13,7 +12,7 @@ class FilterReducer(
     private val updateFilter: UpdateFilter,
     private val resetFilter: ResetFilter,
     private val resetFilters: ResetFilters,
-) : Reducer<PokedexCommand.Filter, PokedexState, PokedexEvent> {
+) : Reducer<PokedexCommand.Filter, PokedexState> {
     override suspend fun reduce(state: PokedexState, command: PokedexCommand.Filter) = when (command) {
         is PokedexCommand.Filter.InitializeFilters -> initializeFilters.execute(Unit).mapCatching {
             getFilters.execute(Unit).getOrThrow()
@@ -22,7 +21,7 @@ class FilterReducer(
                 transition(state.copy(filters = filters))
             },
             onFailure = {
-                transition(state, PokedexEvent.Error.UnableToInitializeFilters())
+                transition(state, PokedexEvent.Error.UnableToInitializeFilters)
             }
         )
 
@@ -37,7 +36,7 @@ class FilterReducer(
                 transition(state.copy(selectedFilter = filter))
             },
             onFailure = {
-                transition(state, PokedexEvent.Error.UnableToSelectFilter())
+                transition(state, PokedexEvent.Error.UnableToSelectFilter)
             }
         )
 
@@ -63,10 +62,10 @@ class FilterReducer(
             }
         }.fold(
             onSuccess = { (state, events) ->
-                cardsReducer.reduce(state, PokedexCommand.Cards.ResetScroll).mergeEvents(events)
+                cardsReducer.reduce(state, PokedexCommand.Cards.ResetScroll).withEvents { it + events }
             },
             onFailure = {
-                transition(state, PokedexEvent.Error.UnableToUpdateFilter())
+                transition(state, PokedexEvent.Error.UnableToUpdateFilter)
             }
         )
 
@@ -87,10 +86,10 @@ class FilterReducer(
                 )
             }.fold(
                 onSuccess = { (state, events) ->
-                    cardsReducer.reduce(state, PokedexCommand.Cards.ResetScroll).mergeEvents(events)
+                    cardsReducer.reduce(state, PokedexCommand.Cards.ResetScroll).withEvents { it + events }
                 },
                 onFailure = {
-                    transition(state, PokedexEvent.Error.UnableToResetFilter())
+                    transition(state, PokedexEvent.Error.UnableToResetFilter)
                 }
             )
         } else transition(state)
@@ -113,10 +112,10 @@ class FilterReducer(
                 }.getOrThrow()
             }.fold(
                 onSuccess = { (state, events) ->
-                    cardsReducer.reduce(state, PokedexCommand.Cards.ResetScroll).mergeEvents(events)
+                    cardsReducer.reduce(state, PokedexCommand.Cards.ResetScroll).withEvents { it + events }
                 },
                 onFailure = {
-                    transition(state, PokedexEvent.Error.UnableToResetFilters())
+                    transition(state, PokedexEvent.Error.UnableToResetFilters)
                 }
             )
         } else transition(state)

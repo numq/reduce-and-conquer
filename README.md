@@ -8,11 +8,18 @@
 
 [Reduce, Conquer, Repeat: How the “Reduce & Conquer” Architecture Can Improve Your Compose Application](https://medium.com/@numq/reduce-conquer-repeat-how-the-reduce-conquer-architecture-can-improve-your-compose-9fece98a3bb8)
 
+|                                                                  🖤                                                                   |                  Support this project                   |               
+|:-------------------------------------------------------------------------------------------------------------------------------------:|:-------------------------------------------------------:|
+|  <img src="https://raw.githubusercontent.com/ErikThiart/cryptocurrency-icons/master/32/bitcoin.png" alt="Bitcoin (BTC)" width="32"/>  | <code>bc1qs6qq0fkqqhp4whwq8u8zc5egprakvqxewr5pmx</code> | 
+| <img src="https://raw.githubusercontent.com/ErikThiart/cryptocurrency-icons/master/32/ethereum.png" alt="Ethereum (ETH)" width="32"/> | <code>0x3147bEE3179Df0f6a0852044BFe3C59086072e12</code> |
+|  <img src="https://raw.githubusercontent.com/ErikThiart/cryptocurrency-icons/master/32/tether.png" alt="USDT (TRC-20)" width="32"/>   |     <code>TKznmR65yhPt5qmYCML4tNSWFeeUkgYSEV</code>     |
+
 ___
 
 ## Navigation
 
 - [About](#about)
+- [Changelog](#changelog)
 - [Overview](#overview)
     - [State](#state)
     - [Command](#command)
@@ -43,7 +50,7 @@ ___
     - [Libraries](#libraries)
 - [More examples](#more-examples)
 
-## About
+# About
 
 This repository contains a [proof of concept](#proof-of-concept) of the **Reduce & Conquer** pattern built into
 the [Clean Architecture](#clean-architecture), using the example of a cross-platform **Pokédex** application built using
@@ -51,7 +58,22 @@ the Compose Multiplatform UI Framework.
 
 ![Gif application demonstration](media/demonstration.gif)
 
-## Overview
+# Changelog
+
+## [2.0.0](https://github.com/numq/reduce-and-conquer/releases/tag/2.0.0)
+
+- Command processing strategies: `Immediate`, `Channel`, `Parallel`
+- Enhanced events with lifecycle management
+- Built-in metrics collection
+- Feature factory for easy creation
+
+## [1.0.0](https://github.com/numq/reduce-and-conquer/releases/tag/1.0.0)
+
+- Initial **Reduce & Conquer** pattern
+- Basic `Feature`, `Reducer`, `Transition`
+- Pokédex example app
+
+# Overview
 
 **Reduce & Conquer** is an architectural pattern leveraging functional programming principles and pure functions to
 create predictable and testable functional components.
@@ -59,35 +81,72 @@ create predictable and testable functional components.
 ```mermaid
 classDiagram
     class Feature {
-        - initialState: State
-        - _coroutineScope: CoroutineScope
-        - _reducer: Reducer<Command, State, Event>
-        - _mutex: Mutex
-        - _state: MutableStateFlow<State>
-        - _events: Channel<Event>
-        + state: StateFlow<State>
-        + events: Flow<Event>
-        + execute(command: Command)
-        + invokeOnClose(block: () -> Unit)
-        + close()
+        <<interface>>
+        +state: StateFlow~State~
+        +events: Flow~Event~
+        +invokeOnClose: (suspend () -> Unit)?
+        +execute(command: Command)*
+        +collect(event, joinCancellation, action)*
+        +stopCollecting(key, joinCancellation)*
+        +stopCollectingAll(joinCancellation)*
+        +cancel()*
+        +cancelAndJoin()*
+        +close()*
     }
+    
+    class BaseFeature {
+        -reducer: Reducer~Command, State~
+        -commandProcessor: CommandProcessor~Command~
+        -perform(command: Command)
+        -dispatchFailure(throwable: Throwable)
+    }
+    
     class Reducer {
-        +suspend reduce(state: State, command: Command): Transition<State, Event>
-        +transition(state: State, vararg event: Event): Transition<State, Event>
+        <<interface>>
+        +reduce(state: State, command: Command): Transition~State~*
+        +transition(state: State, vararg event: Event): Transition~State~
     }
+    
     class Transition {
         +state: State
-        +events: List<Event>
-        +mergeEvents(vararg event: Event): Transition<State, Event>
-        +mergeEvents(events: List<Event>): Transition<State, Event>
+        +events: List~Event~
+        +withEvents(block): Transition~State~
+    }
+    
+    class CommandProcessor {
+        <<interface>>
+        +activeOperations: Int
+        +onFailure: (suspend (Throwable) -> Unit)?
+        +process(action)*
+        +close()*
+    }
+    
+    class Event {
+        <<interface>>
+        +payload: Any?
+        +timestamp: Instant
+    }
+    
+    class MetricsFeature {
+        -feature: Feature~Command, State~
+        -metricsCollector: MetricsCollector~Command~
+        +execute(command)*
     }
 
-    Feature --> Reducer
-    Feature --> Transition
-    Reducer --> Transition
+    class FeatureFactory {
+        +create(initialState, reducer, strategy, ...): Feature~Command, State~
+    }
+
+    Feature <|.. BaseFeature
+    BaseFeature --> Reducer
+    BaseFeature --> CommandProcessor
+    Feature <|.. MetricsFeature
+    MetricsFeature --> MetricsCollector
+    FeatureFactory --> BaseFeature
+    FeatureFactory --> CommandProcessor
 ```
 
-### State
+## State
 
 > [!TIP]
 > The idempotent nature of deterministic state allows you to implement functionality such as rolling back the state to a
@@ -95,84 +154,179 @@ classDiagram
 
 A class or object that describes the current state of the presentation.
 
-### Command
+## Command
 
 A class or object that describes an action that entails updating state and/or raising events.
 
-### Event
+## Event
 
 > [!NOTE]
 > It's not a side effect because reduce is a pure function that returns the same result for the same arguments.
 
 A class or object that describes the **"Fire and forget"** event caused by the execution of a command and the reduction
 of the presentation state.<br>
+
 May contain a payload.
 
-### Feature
+### Event Types in version 2.0.0:
 
-An abstract class that takes three type parameters: `Command`, `State` and `Event`.
+- `Collectable` - for reactive data streams with lifecycle management
+- `Timeout` - when command processing times out
+- `Cancellation` - when command processing is cancelled
+- `Failure` - when command processing fails with an exception
+
+## Feature
+
+An interface that takes two type parameters: Command and State.
 
 **A functional unit** or aggregate of presentation logic within isolated functionality.
 
-#### Properties:
+### Properties:
 
 - `state`: A read-only state flow that exposes the current state.
 - `events`: A flow that exposes the events emitted by the feature.
+- `invokeOnClose`: Optional cleanup callback.
 
-#### Methods:
+### Methods:
 
-- `suspend execute(command: Command)`  
-  Suspending command submission. Use this method when the result of the command is important.
+- `suspend execute(command: Command)`: Suspending command submission with configurable processing strategy.
 
+- `suspend <T> collect(event: Event.Collectable<T>, joinCancellation: Boolean, action: suspend (T) -> Unit)`: Collects
+  reactive data streams with automatic lifecycle management.
 
-- `close()`  
-  Terminates all operations:
-    - Cancels coroutine scope
-    - Closes command/event channels
-    - Invokes optional cleanup via `invokeOnClose`
+- `suspend <T> stopCollecting(key: T, joinCancellation: Boolean)`: Stops collecting specific stream.
 
-### Reducer
+- `suspend stopCollectingAll(joinCancellation: Boolean)`: Stops all active collections.
 
-A functional interface that takes three generic type parameters: `Command`, `State` and `Event`.
+- `suspend cancel()`: Cancels current transition.
 
-**A stateless component** responsible for reducing the input command to a new state and generating events.
+- `suspend cancelAndJoin()`: Cancels current transition and waits for completion.
 
-#### Methods:
+- `suspend close()`: Terminates all operations and cleans up resources.
 
-- `reduce(state: State, command: Command)`: Reduces the `State` with the given `Command` and returns a `Transition`
-- `transition(state: State, vararg event: Event)`: Constructs a `Transition` with the given `State` and
-  variadic `Event`.
-- `transition(state: State, events: List<Event> = emptyList())`: Constructs a `Transition` with the given `State` and
-  list of `Event`s.
+```kotlin
+val feature = FeatureFactory().create(
+    initialState = MyState(),
+    reducer = MyReducer(),
+    strategy = CommandStrategy.Parallel(limit = 4),
+    debounceMillis = 300L,
+    timeoutMillis = 5_000L,
+    coroutineContext = Dispatchers.IO
+)
+```
 
-### Transition
+## Command Processing Strategies
+
+Version 2.0.0 introduces flexible command processing strategies.
+
+### Immediate
+
+Commands are processed immediately in a mutually exclusive manner.
+
+### Channel
+
+- `Unlimited`: Unlimited buffer for commands.
+
+- `Rendezvous`: No buffer, sender waits for receiver.
+
+- `Conflated`: Only the latest command is kept.
+
+- `Fixed`: Fixed capacity buffer.
+
+### Parallel
+
+Process multiple commands in parallel with configurable concurrency limit.
+
+## Configuration Options
+
+- `Debouncing`: Prevent rapid successive commands (useful for frequent inputs)
+
+- `Timeout`: Set maximum processing time per command (prevents hanging operations)
+
+- `Coroutine Context`: Custom execution context for command processing
+
+## Reducer
+
+A functional interface that takes two generic type parameters: `Command` and `State`.
+
+A **stateless component** responsible for reducing the input command to a new state and generating events.
+
+### Methods:
+
+- `reduce(state: State, command: Command)`: Reduces the `State` with the given `Command` and returns a `Transition`.
+- `transition(state: State, vararg event: Event)`: Constructs a `Transition` with the given `State` and variadic`Event`.
+
+## Transition
 
 A data class that represents a state transition.
 
-#### Properties:
+### Properties:
 
 - `state`: The new `State`.
 - `events`: A list of `Event`s emitted during the transition, which can be empty.
 
-#### Extension functions:
+### Methods:
 
-- `mergeEvents(vararg event: Event)`: Takes a variadic `Event` and merges it with the `Event`s of a given transition.
-- `mergeEvents(events: List<Event>)`: Takes a list of `Event`s and merges them with the `Event`s of a given transition.
+- `withEvents(block: (List<Event>) -> List<Event>)`: Transforms events using the provided block.
 
-> [!IMPORTANT]
-> Events passed as an argument will be processed **BEFORE** current events. <br>
-> This is due to the fact that `mergeEvent` is used for already created events.
+## Event System
 
-## Mathematical Proof
+Enhanced event system with built-in error handling and lifecycle management:
 
-### Definition
+```kotlin
+// Collect reactive streams
+feature.collect(
+    event = Event.Collectable(flow = userUpdates, key = "users"),
+    joinCancellation = true
+) { user ->
+    feature.execute(AddUserCommand(user))
+}
+
+// Handle different event types
+feature.events.collect { event ->
+    when (event) {
+        is Event.Timeout -> showTimeoutMessage()
+
+        is Event.Cancellation -> logCancellation()
+
+        is Event.Failure -> handleError(event.throwable)
+
+        is Event.Collectable -> {} // Handled by feature
+    }
+}
+```
+
+## Metrics Collection
+
+Built-in metrics collection for monitoring feature performance:
+
+```kotlin
+class MyMetricsCollector : MetricsCollector<Command> {
+    override fun recordSuccess(command: Command, duration: Duration) {
+        // Log successful command execution
+    }
+
+    override fun recordFailure(command: Command, duration: Duration, throwable: Throwable) {
+        // Log failed command execution
+    }
+}
+
+val feature = MetricsFeature(
+    feature = baseFeature,
+    metricsCollector = MyMetricsCollector()
+)
+```
+
+# Mathematical Proof
+
+## Definition
 
 Let $S$ be the set of states, $C$ be the set of commands, and $E$ be the set of events.
 
 We define a function $R: S \times C \rightarrow (S, E)$, which represents the reduction function that takes a state
 and a command as input and returns a new state and a set of events.
 
-### Proposition
+## Proposition
 
 The function $R$ satisfies the following properties:
 
@@ -184,7 +338,7 @@ The function $R$ satisfies the following properties:
   \circ c_1$, we have:
   $$R(s, c_1) = R(s, c_2)$$
 
-### Proof of Associativity
+## Proof of Associativity
 
 Let $s \in S$, $c_1, c_2 \in C$. We need to show that:
 $$R(R(s, c_1), c_2) = R(s, c_1 \circ c_2)$$
@@ -208,7 +362,7 @@ $$R(R(s, c_1), c_2) = R(s, c_1 \circ c_2)$$
 
 This shows that the reduction function satisfies associativity in the context of command composition.
 
-### Proof of Commutativity
+## Proof of Commutativity
 
 For commutativity under specific conditions where commands are commutative:
 
@@ -234,7 +388,7 @@ $$R(s, c_1 \circ c_2) = R(s, c_2 \circ c_1)$$
 
 This demonstrates the commutativity of the reduction function under the specific condition of commutative commands.
 
-### Conclusion
+## Conclusion
 
 We have successfully proved that the reduction function $R$ satisfies both associativity and commutativity under the
 given conditions.
@@ -247,16 +401,16 @@ under specific conditions.
 These properties provide a solid foundation for ensuring the correctness and reliability of the system, influencing its
 design and maintenance.
 
-## Comparison with popular patterns
+# Comparison with popular patterns
 
-### Model-View-Controller
+## Model-View-Controller
 
 The _MVC_ pattern separates concerns into three parts: `Model`, `View`, and `Controller`.<br>
 The `Model` represents the data, the `View` represents the UI,
 and the `Controller` handles user input and updates the `Model`.<br>
 In contrast, the _Reduce & Conquer_ combines the `Model` and `Controller` into a single unit.
 
-### Model-View-Presenter
+## Model-View-Presenter
 
 The _MVP_ pattern is similar to _MVC_,
 but it separates concerns into three parts: `Model`, `View`, and`Presenter`.<br>
@@ -264,28 +418,28 @@ The `Presenter` acts as an intermediary between the `Model` and `View`, handling
 the `Model`.<br>
 The _Reduce & Conquer_ is more lightweight than _MVP_, as it does not require a separate `Presenter` layer.
 
-### Model-View-ViewModel
+## Model-View-ViewModel
 
 The _MVVM_ pattern is similar to _MVP_,
 but it uses a `ViewModel` as an intermediary between the `Model`and `View`.<br>
 The `ViewModel` exposes data and commands to the `View`, which can then bind to them.<br>
 The _Reduce & Conquer_ is more flexible than _MVVM_, as it does not require a separate `ViewModel` layer.
 
-### Model-View-Intent
+## Model-View-Intent
 
 The _MVI_ pattern is similar to _MVVM_,
 but it uses an `Intent` as an intermediary between the `Model` and`View`.<br>
 The `Intent` represents user input and intent, which is then used to update the `Model`.<br>
 The _Reduce & Conquer_ is more simple than _MVI_, as it does not require an `Intent` layer.
 
-### Redux
+## Redux
 
 The _Redux_ pattern uses a global store to manage application state.<br>
 Actions are dispatched to update the store, which then triggers updates to connected components.<br>
 The _Reduce & Conquer_ uses a local state flow instead of a global store,
 which makes it more scalable for large applications.
 
-### The Elm Architecture
+## The Elm Architecture
 
 The _TEA_ pattern uses a functional programming approach to manage application state.<br>
 The architecture consists of four parts: `Model`, `Update`, `View`, and `Input`.<br>
@@ -295,20 +449,20 @@ The `Model` represents application state,
 The _Reduce & Conquer_ uses a similar approach to _TEA_, but with a focus on reactive programming and
 coroutines.
 
-### Event-Driven Architecture
+## Event-Driven Architecture
 
 The _EDA_ pattern involves processing events as they occur.<br>
 In this pattern, components are decoupled from each other, and events are used to communicate between components.<br>
 The _Reduce & Conquer_ uses events to communicate between components,
 but it also provides a more structured approach to managing state transitions.
 
-### Reactive Architecture
+## Reactive Architecture
 
 The _Reactive Architecture_ pattern involves using reactive programming to manage complex systems.<br>
 In this pattern, components are designed to react to changes in their inputs.<br>
 The _Reduce & Conquer_ uses reactive programming to manage state transitions and emit events.
 
-## Clean Architecture
+# Clean Architecture
 
 **Clean Architecture** is a software design pattern that separates the application's business logic into layers, each
 with its own responsibilities.
@@ -359,21 +513,21 @@ View(
 > Organize your package structure by overall model or functionality rather than by purpose.
 > This type of architecture is called **"screaming"**.
 
-### The architecture is composed of the following layers:
+## The architecture is composed of the following layers:
 
-#### Entities
+### Entities
 
 Representing the business domain, such as users, products, or orders.
 
-#### Use Cases
+### Use Cases
 
 Defining the actions that can be performed on the entities, such as logging in, creating an order, or updating a user.
 
-#### Interface Adapters
+### Interface Adapters
 
 Handling communication between the application and external systems, such as databases, networks, or file systems.
 
-#### Frameworks and Drivers
+### Frameworks and Drivers
 
 Providing the necessary infrastructure for the application to run, such as web servers, databases, or operating systems.
 
@@ -383,7 +537,7 @@ implementation of presentation.
 > [!TIP]
 > Follow the **Feature per View principle** and achieve decomposition by dividing reducers into sub-reducers.
 
-### Working with data flows
+## Working with data flows
 
 The `Feature` class contains [methods that implement the flow mechanism](#methods), but you can also implement your own
 using the principles described below.
@@ -406,70 +560,88 @@ Here is an example implementation of flow collection:
 data class User(val id: String)
 
 interface UserRepository {
-    suspend fun getUsers(): Result<Flow<User>>
+    suspend fun observeUsers(): Result<Flow<List<User>>>
 }
 
-class GetUsers(private val userRepository: UserRepository) {
-    suspend fun execute() = userRepository.getUsers()
-}
-
-sealed interface UserCommand {
-    data class AddUser(val user: User) : UserCommand
-
-    data object GetUsers : UserCommand
+class ObserveUsers(private val userRepository: UserRepository) {
+    suspend fun execute() = userRepository.observeUsers()
 }
 
 data class UserState(
     val users: List<User> = emptyList(),
 )
 
-sealed interface UserEvent : Event {
-    data class Error(val exception: Exception) : UserEvent
+sealed interface UserCommand {
+    data object ObserveUsers : UserCommand
 
-    data class UserUpdates(val users: Flow<User>) : UserEvent
+    data class UpdateUsers(val users: List<User>) : UserCommand
+}
+
+enum class UserEventKey {
+    OBSERVE_USERS
+}
+
+sealed interface UserEvent {
+    data class ObserveUsers(
+        override val flow: Flow<List<User>>
+    ) : UserEvent, Event.Collectable<List<User>>() {
+        override val key = UserEventKey.OBSERVE_USERS
+    }
 }
 
 class UserReducer(
-    private val getUsers: GetUsers,
-) : Reducer<UserCommand, UserState, UserEvent> {
+    private val observeUsers: ObserveUsers,
+) : Reducer<UserCommand, UserState> {
     override suspend fun reduce(state: UserState, command: UserCommand) = when (command) {
-        is UserCommand.AddUser -> transition(state.copy(users = state.users.plus(user)))
-
-        is UserCommand.GetUsers -> getUsers.execute().fold(
-            onSuccess = { users: Flow<User> ->
-                transition(state, UserEvent.UserUpdates(users = users))
+        is UserCommand.ObserveUsers -> observeUsers.execute().fold(
+            onSuccess = { flow: Flow<User> ->
+                transition(state, UserEvent.ObserveUsers(flow = flow))
             },
-            onFailure = {
-                transition(state, UserEvent.Error(Exception(it)))
+            onFailure = { throwable ->
+                transition(state, Event.Failure(throwable = throwable))
             }
         )
 
-        else -> transition(state)
+        is UserCommand.UpdateUsers -> transition(state.copy(users = command.users))
     }
 }
 
-class UserFeature(reducer: UserReducer) : Feature<UserCommand, UserState, UserEvent>(
-    initialState = UserState(),
-    reducer = reducer
-) {
-    init {
-        events.filterIsInstance<UserEvent.UserUpdates>().map { event: UserEvent.UserUpdates ->
-            event.users.collect { user: User ->
-                execute(UserCommand.AddUser(user = user))
-            }
-        }.launchIn(coroutineScope)
+class UserFeature(
+    private val feature: Feature<UserCommand, UserState>
+) : Feature<UserCommand, UserState> by feature {
+    private val coroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
+    init {
         coroutineScope.launch {
-            execute(UserCommand.GetUsers)
+            events.collect { event ->
+                when (event) {
+                    is UserEvent.ObserveUsers -> collect(
+                        event = event, joinCancellation = false, action = { users ->
+                            execute(UserCommand.UpdateUsers(users = users))
+                        })
+                }
+            }
         }
     }
+
+    override val invokeOnClose: (suspend () -> Unit)? get() = { coroutineScope.cancel() }
+}
+
+single {
+    UserFeature(
+        feature = FeatureFactory().create(
+            initialState = UserState(),
+            reducer = UserReducer(observeUsers = get()),
+            strategy = CommandStrategy.Immediate
+        )
+    )
 }
 ```
 
-Due to the fact that we start the collection once, there is no need to manage the collection `flow`,
-job is not stored in a variable.
+The new collect method automatically manages the lifecycle of flow collections, eliminating the need for manual
+coroutine management.
 
-### Testing
+## Testing
 
 It is assumed that all the important logic is contained in the `Reducer`, which means that the testing pipeline can be
 roughly represented as follows:
@@ -482,7 +654,9 @@ assertEquals(expectedState, actualState)
 assertEquals(expectedEvents, actualEvents)
 ```
 
-## Proof of concept
+With version 2.0.0, you can also test different command processing strategies and error scenarios.
+
+# Proof of concept
 
 A cross-platform Pokédex application built using the Compose Multiplatform UI Framework.
 
@@ -542,17 +716,17 @@ graph TD
     SortReducer["Sort Reducer"] --> ChangeSort["Change Sort"]
 ```
 
-### Features
+## Features
 
-#### Navigation feature functionality:
+### Navigation feature functionality:
 
 - Switching between Daily and Pokedex screens (functionality).
 
-#### Daily feature functionality:
+### Daily feature functionality:
 
 - Get a Pokemon of the Day card based on the current day's timestamp
 
-#### Pokedex feature functionality:
+### Pokedex feature functionality:
 
 - Getting a grid of Pokemon cards
 - Search by name
@@ -565,11 +739,12 @@ graph TD
 > - front side contains name, image and type affiliation
 > - back side contains name and hexagonal skill graph
 
-### Libraries
+## Libraries
 
 - Jetpack Compose Multiplatform
 - Kotlin Coroutines
 - Kotlin Flow
+- Kotlin AtomicFU
 - Kotlin Datetime
 - Kotlin Serialization Json
 - Koin Dependency Injection
@@ -577,6 +752,15 @@ graph TD
 - Kotlin Coroutines Test
 - Mockk
 
-## More examples
+# More examples
 
-- [Klarity](https://github.com/numq/Klarity) - Jetpack Compose Desktop media player library demonstration (example) project
+- [Haskcore](https://github.com/numq/haskcore) - A modern, lightweight standalone desktop IDE with LSP support, built
+  with Kotlin & Compose Desktop for Haskell development
+- [StarsNoMore](https://github.com/numq/StarsNoMore) - An application for getting a summary of statistics and traffic of
+  a user's GitHub repositories
+- [Klarity](https://github.com/numq/Klarity) - Jetpack Compose Desktop media player library demonstration (example)
+  project
+- [camera-capture](https://github.com/numq/camera-capture) - Part of a project (mobile application) that provides the
+  ability to take pictures with a smartphone camera and use them in the ComfyUI workflow
+- [compose-desktop-media-player](https://github.com/numq/compose-desktop-media-player) - Examples of implementing a
+  media (audio/video) player for Jetpack Compose Desktop using various libraries

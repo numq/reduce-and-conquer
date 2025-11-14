@@ -22,7 +22,7 @@ import notification.NotificationError
 import notification.queue.rememberNotificationQueue
 
 @Composable
-fun PokedexView(feature: PokedexFeature, gridState: LazyGridState) {
+internal fun PokedexView(feature: PokedexFeature, gridState: LazyGridState) {
     val coroutineScope = rememberCoroutineScope { Dispatchers.Default }
 
     val notificationQueue = rememberNotificationQueue()

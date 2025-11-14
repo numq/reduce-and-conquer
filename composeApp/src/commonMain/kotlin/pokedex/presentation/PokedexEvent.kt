@@ -1,23 +1,74 @@
 package pokedex.presentation
 
-import com.benasher44.uuid.Uuid
-import com.benasher44.uuid.uuid4
-import event.Event
+import feature.Event
+import kotlinx.datetime.Clock
 
-sealed interface PokedexEvent : Event<Uuid> {
-    sealed class Error(val message: String, override val key: Uuid = uuid4()) : PokedexEvent {
-        data class GetMaxAttributeValue(override val key: Uuid = uuid4()) : Error("Unable to get max attribute value")
-        data class GetPokemons(override val key: Uuid = uuid4()) : Error("Unable to get pokemons")
-        data class LoadMore(override val key: Uuid = uuid4()) : Error("Unable to load more")
-        data class UnableToInitializeFilters(override val key: Uuid = uuid4()) : Error("Unable to initialize filters")
-        data class UnableToSelectFilter(override val key: Uuid = uuid4()) : Error("Unable to select filter")
-        data class UnableToUpdateFilter(override val key: Uuid = uuid4()) : Error("Unable to update filter")
-        data class UnableToResetFilter(override val key: Uuid = uuid4()) : Error("Unable to reset filter")
-        data class UnableToResetFilters(override val key: Uuid = uuid4()) : Error("Unable to reset filters")
-        data class UnableToSelectSort(override val key: Uuid = uuid4()) : Error("Unable to select sort")
+internal sealed interface PokedexEvent : Event {
+    sealed class Error(val message: String) : PokedexEvent {
+        data object GetMaxAttributeValue : Error("Unable to get max attribute value") {
+            override val payload = null
+
+            override val timestamp = Clock.System.now()
+        }
+
+        data object GetPokemons : Error("Unable to get pokemons") {
+            override val payload = null
+
+            override val timestamp = Clock.System.now()
+        }
+
+        data object LoadMore : Error("Unable to load more") {
+            override val payload = null
+
+            override val timestamp = Clock.System.now()
+        }
+
+        data object UnableToInitializeFilters : Error("Unable to initialize filters") {
+            override val payload = null
+
+            override val timestamp = Clock.System.now()
+        }
+
+        data object UnableToSelectFilter : Error("Unable to select filter") {
+            override val payload = null
+
+            override val timestamp = Clock.System.now()
+        }
+
+        data object UnableToUpdateFilter : Error("Unable to update filter") {
+            override val payload = null
+
+            override val timestamp = Clock.System.now()
+        }
+
+        data object UnableToResetFilter : Error("Unable to reset filter") {
+            override val payload = null
+
+            override val timestamp = Clock.System.now()
+        }
+
+        data object UnableToResetFilters : Error("Unable to reset filters") {
+            override val payload = null
+
+            override val timestamp = Clock.System.now()
+        }
+
+        data object UnableToSelectSort : Error("Unable to select sort") {
+            override val payload = null
+
+            override val timestamp = Clock.System.now()
+        }
     }
 
-    data class ScrollToStart(override val key: Uuid = uuid4()) : PokedexEvent
+    data object ScrollToStart : PokedexEvent {
+        override val payload = null
 
-    data class ResetScroll(override val key: Uuid = uuid4()) : PokedexEvent
+        override val timestamp = Clock.System.now()
+    }
+
+    data object ResetScroll : PokedexEvent {
+        override val payload = null
+
+        override val timestamp = Clock.System.now()
+    }
 }

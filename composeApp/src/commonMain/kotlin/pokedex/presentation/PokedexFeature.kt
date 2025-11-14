@@ -1,17 +1,13 @@
 package pokedex.presentation
 
 import feature.Feature
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 
-class PokedexFeature(
-    coroutineScope: CoroutineScope,
-    reducer: PokedexReducer
-) : Feature<PokedexCommand, PokedexState, PokedexEvent>(
-    initialState = PokedexState(),
-    coroutineScope = coroutineScope,
-    reducer = reducer
-) {
+internal class PokedexFeature(
+    private val feature: Feature<PokedexCommand, PokedexState>
+) : Feature<PokedexCommand, PokedexState> by feature {
+    private val coroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+
     init {
         coroutineScope.launch {
             execute(PokedexCommand.Cards.GetMaxAttributeValue)
@@ -21,4 +17,6 @@ class PokedexFeature(
             execute(PokedexCommand.Sort.SortPokemons(state.value.sort))
         }
     }
+
+    override val invokeOnClose: (suspend () -> Unit)? get() = { coroutineScope.cancel() }
 }

@@ -5,17 +5,17 @@ import daily.GetMaxAttributeValue
 import feature.Reducer
 import pokedex.GetPokemons
 
-class CardsReducer(
+internal class CardsReducer(
     private val getMaxAttributeValue: GetMaxAttributeValue,
     private val getPokemons: GetPokemons,
-) : Reducer<PokedexCommand.Cards, PokedexState, PokedexEvent> {
+) : Reducer<PokedexCommand.Cards, PokedexState> {
     override suspend fun reduce(state: PokedexState, command: PokedexCommand.Cards) = when (command) {
         is PokedexCommand.Cards.GetMaxAttributeValue -> getMaxAttributeValue.execute(Unit).fold(
             onSuccess = { value ->
                 transition(state.copy(maxAttributeValue = value))
             },
             onFailure = {
-                transition(state, PokedexEvent.Error.GetMaxAttributeValue())
+                transition(state, PokedexEvent.Error.GetMaxAttributeValue)
             }
         )
 
@@ -27,11 +27,11 @@ class CardsReducer(
                     state.copy(
                         cards = cards.map { card -> state.cards.find { it.item.id == card.item.id } ?: card }
                     ),
-                    PokedexEvent.ResetScroll()
+                    PokedexEvent.ResetScroll
                 )
             },
             onFailure = {
-                transition(state, PokedexEvent.Error.GetPokemons())
+                transition(state, PokedexEvent.Error.GetPokemons)
             }
         )
 
@@ -44,7 +44,7 @@ class CardsReducer(
                 transition(state.copy(cards = state.cards.plus(cards)))
             },
             onFailure = {
-                transition(state, PokedexEvent.Error.LoadMore())
+                transition(state, PokedexEvent.Error.LoadMore)
             }
         )
 
@@ -56,6 +56,6 @@ class CardsReducer(
             )
         )
 
-        is PokedexCommand.Cards.ResetScroll -> transition(state, PokedexEvent.ResetScroll())
+        is PokedexCommand.Cards.ResetScroll -> transition(state, PokedexEvent.ResetScroll)
     }
 }

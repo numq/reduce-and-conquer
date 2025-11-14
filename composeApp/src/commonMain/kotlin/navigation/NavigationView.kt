@@ -24,7 +24,7 @@ import org.koin.compose.koinInject
 import pokedex.presentation.PokedexView
 
 @Composable
-fun NavigationView(feature: NavigationFeature) {
+internal fun NavigationView(feature: NavigationFeature) {
     val coroutineScope = rememberCoroutineScope { Dispatchers.Default }
 
     val state by feature.state.collectAsState()
@@ -37,12 +37,14 @@ fun NavigationView(feature: NavigationFeature) {
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-            this@Column.AnimatedVisibility(visible = state is NavigationState.Daily,
+            this@Column.AnimatedVisibility(
+                visible = state is NavigationState.Daily,
                 enter = slideInHorizontally { -it },
                 exit = slideOutHorizontally { -it }) {
                 DailyView(feature = koinInject())
             }
-            this@Column.AnimatedVisibility(visible = state is NavigationState.Pokedex,
+            this@Column.AnimatedVisibility(
+                visible = state is NavigationState.Pokedex,
                 enter = slideInHorizontally { it },
                 exit = slideOutHorizontally { it }) {
                 PokedexView(gridState = pokedexGridState, feature = koinInject())

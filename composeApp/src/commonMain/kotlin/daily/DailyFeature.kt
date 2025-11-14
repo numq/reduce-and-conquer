@@ -1,14 +1,13 @@
 package daily
 
 import feature.Feature
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 
-class DailyFeature(
-    coroutineScope: CoroutineScope, reducer: DailyReducer
-) : Feature<DailyCommand, DailyState, DailyEvent>(
-    initialState = DailyState(), coroutineScope = coroutineScope, reducer = reducer
-) {
+internal class DailyFeature(
+    private val feature: Feature<DailyCommand, DailyState>
+) : Feature<DailyCommand, DailyState> by feature {
+    private val coroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+
     init {
         coroutineScope.launch {
             execute(DailyCommand.GetMaxAttributeValue)
@@ -16,4 +15,6 @@ class DailyFeature(
             execute(DailyCommand.GetDailyPokemon)
         }
     }
+
+    override val invokeOnClose: (suspend () -> Unit)? get() = { coroutineScope.cancel() }
 }

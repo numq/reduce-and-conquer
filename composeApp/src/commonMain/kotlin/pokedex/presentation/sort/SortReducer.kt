@@ -4,10 +4,10 @@ import feature.Reducer
 import pokedex.presentation.*
 import pokedex.sort.ChangeSort
 
-class SortReducer(
+internal class SortReducer(
     private val cardsReducer: CardsReducer,
     private val changeSort: ChangeSort,
-) : Reducer<PokedexCommand.Sort, PokedexState, PokedexEvent> {
+) : Reducer<PokedexCommand.Sort, PokedexState> {
     override suspend fun reduce(state: PokedexState, command: PokedexCommand.Sort) = when (command) {
         is PokedexCommand.Sort.ToggleSortMode -> transition(
             state.copy(interactionMode = PokedexInteractionMode.SORT.takeIf { mode ->
@@ -26,7 +26,7 @@ class SortReducer(
                 )
             },
             onFailure = {
-                transition(state, PokedexEvent.Error.UnableToSelectSort())
+                transition(state, PokedexEvent.Error.UnableToSelectSort)
             }
         )
     }

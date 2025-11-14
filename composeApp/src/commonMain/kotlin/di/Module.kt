@@ -1,15 +1,16 @@
 package di
 
-import daily.DailyFeature
-import daily.DailyReducer
-import daily.GetDailyPokemon
-import daily.GetMaxAttributeValue
+import daily.*
+import feature.factory.CommandStrategy
+import feature.factory.FeatureFactory
 import file.FileProvider
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import navigation.NavigationFeature
 import navigation.NavigationReducer
+import navigation.NavigationState
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.koin.dsl.onClose
@@ -19,6 +20,7 @@ import pokedex.filter.*
 import pokedex.presentation.CardsReducer
 import pokedex.presentation.PokedexFeature
 import pokedex.presentation.PokedexReducer
+import pokedex.presentation.PokedexState
 import pokedex.presentation.filter.FilterReducer
 import pokedex.presentation.sort.SortReducer
 import pokedex.sort.ChangeSort
@@ -37,21 +39,34 @@ private val pokemon = module {
 
 private val navigation = module {
     single { NavigationReducer() }
-    single { NavigationFeature(coroutineScope = CoroutineScope(Dispatchers.Default), reducer = get()) }
+    single {
+        NavigationFeature(
+            feature = FeatureFactory().create(
+                initialState = NavigationState.Daily,
+                reducer = NavigationReducer(),
+                strategy = CommandStrategy.Immediate
+            )
+        )
+    }
 }
 
+@OptIn(DelicateCoroutinesApi::class)
 private val daily = module {
     single { GetMaxAttributeValue(get()) }
     single { GetDailyPokemon(get()) }
     single { DailyReducer(get(), get()) }
     single {
         DailyFeature(
-            coroutineScope = CoroutineScope(Dispatchers.Default),
-            reducer = get()
+            feature = FeatureFactory().create(
+                initialState = DailyState(),
+                reducer = DailyReducer(get(), get()),
+                strategy = CommandStrategy.Immediate
+            )
         )
-    } onClose { it?.close() }
+    } onClose { GlobalScope.launch { it?.close() } }
 }
 
+@OptIn(DelicateCoroutinesApi::class)
 private val pokedex = module {
     single { PokedexRepository.Implementation() } bind PokedexRepository::class
     single { GetPokemons(get(), get()) }
@@ -68,10 +83,13 @@ private val pokedex = module {
     single { SortReducer(get(), get()) }
     single {
         PokedexFeature(
-            coroutineScope = CoroutineScope(Dispatchers.Default),
-            reducer = get()
+            feature = FeatureFactory().create(
+                initialState = PokedexState(),
+                reducer = PokedexReducer(get(), get(), get()),
+                strategy = CommandStrategy.Immediate
+            )
         )
-    } onClose { it?.close() }
+    } onClose { GlobalScope.launch { it?.close() } }
 }
 
 internal val appModule = listOf(application, pokemon, navigation, daily, pokedex)
