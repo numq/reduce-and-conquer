@@ -80,9 +80,9 @@ create predictable and testable functional components.
 classDiagram
     class Feature {
         <<interface>>
-        +state: StateFlow~State~
-        +events: Flow~Event~
-        +invokeOnClose: (suspend () -> Unit)?
+        +StateFlow~State~ state
+        +Flow~Event~ events
+        +((suspend () -> Unit))? invokeOnClose
         +execute(command: Command)*
         +collect(event, joinCancellation, action)*
         +stopCollecting(key, joinCancellation)*
@@ -93,8 +93,8 @@ classDiagram
     }
     
     class BaseFeature {
-        -reducer: Reducer~Command, State~
-        -commandProcessor: CommandProcessor~Command~
+        -Reducer~Command, State~ reducer
+        -CommandProcessor~Command~ commandProcessor
         -perform(command: Command)
         -dispatchFailure(throwable: Throwable)
     }
@@ -106,28 +106,28 @@ classDiagram
     }
     
     class Transition {
-        +state: State
-        +events: List~Event~
+        +State state
+        +List~Event~ events
         +withEvents(block): Transition~State~
     }
     
     class CommandProcessor {
         <<interface>>
-        +activeOperations: Int
-        +onFailure: (suspend (Throwable) -> Unit)?
+        +Int activeOperations
+        +((suspend (Throwable) -> Unit))? onFailure
         +process(action)*
         +close()*
     }
     
     class Event {
         <<interface>>
-        +payload: Any?
-        +timestamp: Instant
+        +Any? payload
+        +Instant timestamp
     }
     
     class MetricsFeature {
-        -feature: Feature~Command, State~
-        -metricsCollector: MetricsCollector~Command~
+        -Feature~Command, State~ feature
+        -MetricsCollector~Command~ metricsCollector
         +execute(command)*
     }
 
@@ -269,27 +269,29 @@ A data class that represents a state transition.
 
 ## Event System
 
-Enhanced event system with built-in error handling and lifecycle management:
+Enhanced event system with built-in error handling and lifecycle management.
 
 ```kotlin
-// Collect reactive streams
-feature.collect(
-    event = Event.Collectable(flow = userUpdates, key = "users"),
-    joinCancellation = true
-) { user ->
-    feature.execute(AddUserCommand(user))
+// Collect flows in feature
+events.collect { event ->
+    when (event) {
+        is UserEvent.ObserveUsers -> collect(
+            event = event, joinCancellation = false, action = { users ->
+                execute(UserCommand.UpdateUsers(users = users))
+            })
+    }
 }
 
-// Handle different event types
-feature.events.collect { event ->
+// Handle different event types in Composable
+val event by feature.events.collectAsState(null)
+
+LaunchedEffect(event) {
     when (event) {
-        is Event.Timeout -> showTimeoutMessage()
+        is PokedexEvent.ScrollToStart -> gridState.animateScrollToItem(0)
 
-        is Event.Cancellation -> logCancellation()
+        is PokedexEvent.ResetScroll -> gridState.scrollToItem(0)
 
-        is Event.Failure -> handleError(event.throwable)
-
-        is Event.Collectable -> {} // Handled by feature
+        else -> Unit
     }
 }
 ```
