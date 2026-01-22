@@ -18,6 +18,10 @@ ___
 
 - [About](#about)
 - [Changelog](#changelog)
+- [Core Principles](#core-principles)
+- [Mathematical Core](#mathematical-core)
+- [Universal Architecture Components](#universal-architecture-components)
+- [Universal Implementation](#universal-implementation)
 - [Overview](#overview)
     - [State](#state)
     - [Command](#command)
@@ -45,22 +49,23 @@ ___
 - [Clean Architecture](#clean-architecture)
     - [Working with data flows](#working-with-data-flows)
     - [Testing](#testing)
-- [Proof of concept](#proof-of-concept)
+- [Example (Proof of Concept)](#example-proof-of-concept)
     - [Features](#features)
     - [Libraries](#libraries)
 - [More examples](#more-examples)
 
-# About
+## About
 
-This repository contains a [proof of concept](#proof-of-concept) of the **Reduce & Conquer** pattern built into
-the [Clean Architecture](#clean-architecture), using the example of a cross-platform **Pokédex** application built using
-the Compose Multiplatform UI Framework.
+**Reduce & Conquer** is a universal architectural pattern with formal mathematical foundations, designed for building
+predictable, testable, and maintainable software systems across any platform or framework.
 
-![Gif application demonstration](media/demonstration.gif)
+This repository contains a reference implementation and comprehensive [example](#example-proof-of-concept) demonstrating
+how the pattern integrates with Clean Architecture, using a Pokédex application built with Compose Multiplatform as the
+demonstration vehicle.
 
-# Changelog
+## Changelog
 
-## [3.0.0](https://github.com/numq/reduce-and-conquer/releases/tag/3.0.0)
+### [3.0.0](https://github.com/numq/reduce-and-conquer/releases/tag/3.0.0)
 
 - **Major simplification and optimization**: Removed `Factory`, `Strategy`, `Processor`, `Metrics`.
 - **Dual-system architecture**: Separated concerns between `Event` (notifications) and `Effect` (side operations).
@@ -69,23 +74,317 @@ the Compose Multiplatform UI Framework.
 - **Composable reducers**: Added `combine` operator for reducer composition.
 - **Enhanced type safety**: Clear separation between events and operational effects.
 
-## [2.0.0](https://github.com/numq/reduce-and-conquer/releases/tag/2.0.0)
+### [2.0.0](https://github.com/numq/reduce-and-conquer/releases/tag/2.0.0)
 
 - Command processing strategies: `Immediate`, `Channel`, `Parallel`
 - Enhanced events with lifecycle management
 - Built-in metrics collection
 - Feature factory for easy creation
 
-## [1.0.0](https://github.com/numq/reduce-and-conquer/releases/tag/1.0.0)
+### [1.0.0](https://github.com/numq/reduce-and-conquer/releases/tag/1.0.0)
 
 - Initial **Reduce & Conquer** pattern
 - Basic `Feature`, `Reducer`, `Transition`
 - Pokédex example app
 
-# Overview
+## Core Principles
 
-**Reduce & Conquer** is an architectural pattern leveraging functional programming principles and pure functions to
-create predictable and testable functional components.
+### Purity & Determinism
+
+Business logic resides in pure functions without side effects. Given the same State and Command, you always get the same
+Transition—enabling time-travel debugging, reproducible testing, and formal verification.
+
+### Explicit Side Effects
+
+All non-deterministic operations—network calls, database access, timers—are encapsulated in Effects. The reduction core
+remains pure, while effects are managed through a structured system.
+
+### Unidirectional Data Flow
+
+Data flows in a single direction: **Command → Reducer → (State, Events, Effects) → Command**. This eliminates circular
+dependencies and makes system behavior traceable.
+
+### Mathematical Formalization
+
+Every architectural decision is backed by **formal proofs**. The system's properties aren't just conventions—they're
+mathematically guaranteed.
+
+## Mathematical Core
+
+At the heart of the pattern lies a single, pure function:
+
+```
+reduce :: (State, Command) → (State, [Event], [Effect])
+```
+
+This function must satisfy algebraic laws:
+
+- Associativity: Sequential command application is order-independent
+
+- Commutativity (where applicable): Parallel commands produce consistent results
+
+- Idempotency: Repeated commands yield identical outcomes
+
+These properties are formally proven and enable:
+
+- Deterministic state management
+
+- Formal verification capabilities
+
+- Predictable system behavior
+
+## Universal Architecture Components
+
+The pattern defines four core abstractions that work together to form a complete system:
+
+1. State
+   The immutable representation of system state at any point in time. States are idempotent and deterministic—replaying
+   the same commands always produces identical states.
+
+2. Command
+   An intention to change the system. Commands are declarative messages that describe "what should happen" without
+   specifying implementation details.
+
+3. Event
+   A notification that something occurred. Events are fire-and-forget messages emitted during state transitions, useful
+   for auditing, logging, or external notifications.
+
+4. Effect
+   A structured side operation. Effects manage asynchronous work, reactive streams, or external interactions while
+   maintaining purity in the core reduction logic.
+
+```mermaid
+graph LR
+    Command["🗒️ Command"] --> Reducer["🧮 Reducer<br/>R: S×C→(S,Ev,Ef)"]
+    State["📊 State"] --> Reducer
+    Reducer --> NewState["📊 New State"]
+    Reducer --> Events["📨 Events"]
+    Reducer --> Effects["⚡ Effects"]
+    Effects -->|execute| Command
+    Events -->|notify| External["🌍 External Systems"]
+```
+
+## Universal Implementation
+
+While this repository demonstrates the pattern in Kotlin with Compose Multiplatform, **Reduce & Conquer** is
+fundamentally platform-agnostic. The same mathematical principles apply across any language, framework, or domain.
+
+<details>
+<summary>Typescript</summary>
+
+```typescript
+// React/TypeScript (Web)
+type Reducer<S, C, E> = (state: S, command: C) => Transition<S, E>;
+
+interface Transition<S, E> {
+    state: S;
+    events: E[];
+    effects: Effect<C>[];
+}
+
+// Example usage with React Hooks
+const useFeature = <S, C, E>(
+    initialState: S,
+    reducer: Reducer<S, C, E>
+) => {
+    const [state, setState] = useState(initialState);
+
+    const execute = useCallback((command: C) => {
+        const transition = reducer(state, command);
+        setState(transition.state);
+        transition.effects.forEach(processEffect);
+    }, [state, reducer]);
+
+    return {state, execute};
+};
+```
+
+</details>
+
+<details>
+<summary>Swift</summary>
+
+```swift
+// SwiftUI (iOS/macOS)
+protocol Reducer {
+    associatedtype State
+    associatedtype Command  
+    associatedtype Event
+
+    func reduce(state: State, command: Command) -> Transition<State, Event>
+}
+
+struct Transition<State, Event> {
+    let state: State
+    let events: [Event]
+    let effects: [Effect<Command>]
+}
+
+// SwiftUI View integration
+@Observable
+class Feature<State, Command, Event>: ObservableObject {
+    @Published private(set) var state: State
+    private let reducer: any Reducer<State, Command, Event>
+
+    init(initialState: State, reducer: any Reducer<State, Command, Event>) {
+        self.state = initialState
+        self.reducer = reducer
+    }
+    
+    func execute(_ command: Command) {
+        let transition = reducer.reduce(state: state, command: command)
+        state = transition.state
+        transition.effects.forEach(processEffect)
+    }
+}
+```
+
+</details>
+
+<details>
+<summary>Dart</summary>
+
+```dart
+// Flutter
+abstract class Reducer<State, Command, Event> {
+  Transition<State, Event> reduce(State state, Command command);
+}
+
+class Transition<State, Event> {
+  final State state;
+  final List<Event> events;
+  final List<Effect<Command>> effects;
+
+  Transition(this.state, this.events, this.effects);
+}
+
+// Flutter Widget integration
+class FeatureBuilder<State, Command, Event> extends StatefulWidget {
+  final Reducer<State, Command, Event> reducer;
+  final State initialState;
+  final Widget Function(BuildContext, State, Function(Command)) builder;
+
+  FeatureBuilder({
+    required this.reducer,
+    required this.initialState,
+    required this.builder,
+  });
+
+  @override
+  _FeatureBuilderState createState() => _FeatureBuilderState();
+}
+```
+
+</details>
+
+<details>
+<summary>Rust</summary>
+
+```rust
+// Rust (Systems Programming)
+pub trait Reducer {
+    type State;
+    type Command;
+    type Event;
+
+    fn reduce(&self, state: Self::State, command: Self::Command) 
+        -> Transition<Self::State, Self::Event>;
+}
+
+pub struct Transition<S, E> {
+    pub state: S,
+    pub events: Vec<E>,
+    pub effects: Vec<Effect<Command>>,
+}
+
+// Async/await support with tokio
+impl<S, C, E> Feature<S, C, E>
+where
+    S: Clone + Send + 'static,
+    C: Send + 'static,
+    E: Send + 'static,
+{
+    pub async fn execute(&self, command: C) -> Result<(), Box<dyn Error>> {
+        let transition = self.reducer.reduce(self.state.lock().unwrap().clone(), command);
+        *self.state.lock().unwrap() = transition.state;
+        self.process_effects(transition.effects).await;
+        Ok(())
+    }
+}
+```
+
+</details>
+
+<details>
+<summary>Go</summary>
+
+```go
+// Go (Backend/Cloud)
+type Reducer[S any, C any, E any] interface {
+    Reduce(state S, command C) Transition[S, E]
+}
+
+type Transition[S any, E any] struct {
+    State S
+    Events  []E
+    Effects []Effect[C]
+}
+
+// Goroutine-safe implementation
+type Feature[S any, C any, E any] struct {
+    state S
+    mu sync.RWMutex
+    reducer Reducer[S, C, E]
+}
+
+func (f *Feature[S, C, E]) Execute(command C) {
+    f.mu.Lock()
+    defer f.mu.Unlock()
+
+    transition := f.reducer.Reduce(f.state, command)
+    f.state = transition.State
+    go f.processEffects(transition.Effects)
+}
+```
+
+</details>
+
+<details>
+<summary>Haskell</summary>
+
+```haskell
+-- Haskell (Pure Functional)
+type Reducer state command event = 
+  state -> command -> (state, [event], [Effect command])
+
+data Transition state event = Transition
+  { state :: state
+  , events :: [event]
+  , effects :: [Effect]
+  }
+
+-- Using State monad transformer
+runFeature :: Reducer s c e -> s -> [c] -> (s, [e])
+runFeature reducer initialState commands =
+  foldl' step (initialState, []) commands
+  where
+    step (s, es) cmd =
+      let Transition s' es' _ = reducer s cmd
+      in (s', es ++ es')
+```
+
+</details>
+
+## Overview
+
+**Reduce & Conquer** is a universal architectural pattern based on a rigorous mathematical model where state transitions
+are
+governed by pure reduction functions:
+
+$$R: S \times C \rightarrow (S, Ev, Ef)$$
+
+This establishes a predictable, testable, and composable foundation for software systems across any platform, framework,
+or domain.
 
 ```mermaid
 classDiagram
@@ -109,13 +408,12 @@ classDiagram
     }
     
     class Reducer~State, Command, Event~ {
-        <<fun interface>>
+        <<interface>>
         +reduce(state: State, command: Command): Transition~State, Event~*
         +transition(state: State)
         +action(key, fallback, block)
         +stream(key, flow, strategy, fallback)
         +cancel(key)
-        +combine(other: Reducer)
     }
     
     class Transition~State, Event~ {
@@ -157,7 +455,7 @@ classDiagram
    
 ```
 
-## State
+### State
 
 > [!TIP]
 > The idempotent nature of deterministic state allows you to implement functionality such as rolling back the state to a
@@ -165,15 +463,15 @@ classDiagram
 
 A class or object that describes the current state of the functional unit (or component).
 
-## Command
+### Command
 
 A class or object that describes an action that entails updating state and/or producing effects.
 
-## Event
+### Event
 
 An interface that describes **events** caused by the execution of a command and the reduction of the state.
 
-## Effect
+### Effect
 
 > [!IMPORTANT]
 > Effects are the primary mechanism for managing side effects in version 3.0.0. They handle reactive streams and
@@ -181,13 +479,13 @@ An interface that describes **events** caused by the execution of a command and 
 
 An interface that describes **side effects** for managing asynchronous operations and reactive streams.
 
-### Effect Types in version 3.0.0:
+#### Effect Types in version 3.0.0:
 
 - `Stream<out Command>` - for collecting reactive data streams with automatic lifecycle management
 - `Action<out Command>` - for executing deferred operations with error handling
 - `Cancel` - for cancelling ongoing operations by key
 
-### Effect Strategies
+#### Effect Strategies
 
 The `Effect.Stream` supports two execution strategies to manage how data flows are collected within the `BaseFeature`:
 
@@ -197,28 +495,28 @@ The `Effect.Stream` supports two execution strategies to manage how data flows a
 - `Restart`: Implements "latest-only" logic using collectLatest. If a new emission occurs before the previous command
   processing is complete, the previous job is cancelled and replaced by the new one.
 
-### Event vs Effect:
+#### Event vs Effect:
 
 - **Events** are for notifications and state changes (fire-and-forget)
 - **Effects** are for managing asynchronous operations and reactive streams
 
-## Feature
+### Feature
 
 An interface that takes three type parameters: `State`, `Command`, and `Event`.
 
 **A functional unit** or aggregate of business logic within isolated functionality.
 
-### Properties:
+#### Properties:
 
 - `state`: A read-only state flow that exposes the current state.
 - `events`: A flow that exposes the events produced by the feature.
 
-### Methods:
+#### Methods:
 
 - `suspend execute(command)`: Submits a command for processing.
 - `close()`: Terminates all operations and cleans up resources.
 
-### BaseFeature Implementation:
+#### BaseFeature Implementation:
 
 The `BaseFeature` class provides a reference implementation:
 
@@ -237,13 +535,13 @@ val feature = BaseFeature(
 )
 ```
 
-## Reducer
+### Reducer
 
 A functional interface that takes three generic type parameters: `State`, `Command`, and `Event`.
 
 A **stateless component** responsible for reducing the input command to a new state, events, and effects.
 
-### Methods:
+#### Methods:
 
 - `reduce(state, command)`: Reduces the `State` with the given `Command` and returns a `Transition` containing new
   state, events, and effects.
@@ -251,7 +549,7 @@ A **stateless component** responsible for reducing the input command to a new st
 - `transition(state)`: Creates a `Transition` with the given `State` and empty
   events/effects lists. This is a convenience method for creating initial transitions.
 
-### Helper DSL:
+#### Helper DSL:
 
 - `action(key, fallback, block)`: Creates an `Effect.Action`. Useful for one-off asynchronous operations like a single
   API call or database transaction.
@@ -262,27 +560,11 @@ A **stateless component** responsible for reducing the input command to a new st
 - `cancel(key)`: Creates an `Effect.Cancel`. Immediately terminates any ongoing job (`Action` or `Stream`) associated
   with the provided key.
 
-### Reducer Composition:
-
-Reducers can be combined using the `combine` operator, which merges both events and effects:
-
-```kotlin
-val combinedReducer = firstReducer.combine(secondReducer)
-```
-
-The combine operator works as follows:
-
-- `state`: Uses the state from the second reducer (applied after the first)
-
-- `events`: Concatenates events from both reducers (`src.events + dst.events`)
-
-- `effects`: Concatenates effects from both reducers (`src.effects + dst.effects`)
-
-## Transition
+### Transition
 
 A data class that represents a state transition.
 
-### Properties:
+#### Properties:
 
 - `state`: The new `State`.
 
@@ -290,7 +572,7 @@ A data class that represents a state transition.
 
 - `effects`: A list of `Effect`s produced during the transition (for side effect management).
 
-### Helper DSL:
+#### Helper DSL:
 
 - `event(event)`: Adds a single event to the transition
 
@@ -300,7 +582,7 @@ A data class that represents a state transition.
 
 - `effects(vararg effects)`: Adds multiple side effects to the transition
 
-## Effect System
+### Effect System
 
 The effect system provides structured side effect management:
 
@@ -336,16 +618,16 @@ class MyReducer : Reducer<MyState, MyCommand, MyEvent> {
 }
 ```
 
-# Mathematical Proof
+## Mathematical Proof
 
-## Definition
+### Definition
 
 Let $S$ be the set of states, $C$ be the set of commands, $Ev$ be the set of events, and $Ef$ be the set of effects.
 
 We define a function $R: S \times C \rightarrow (S, Ev, Ef)$, which represents the reduction function that takes a state
 and a command as input and returns a new state, a set of events, and a set of effects.
 
-## Proposition
+### Proposition
 
 The function $R$ satisfies the following properties:
 
@@ -357,7 +639,7 @@ The function $R$ satisfies the following properties:
   \circ c_1$, we have:
   $$R(s, c_1) = R(s, c_2)$$
 
-## Proof of Associativity
+### Proof of Associativity
 
 Let $s \in S$, $c_1, c_2 \in C$. We need to show that:
 $$R(R(s, c_1), c_2) = R(s, c_1 \circ c_2)$$
@@ -383,7 +665,7 @@ $$R(R(s, c_1), c_2) = R(s, c_1 \circ c_2)$$
 
 This shows that the reduction function satisfies associativity in the context of command composition.
 
-## Proof of Commutativity
+### Proof of Commutativity
 
 For commutativity under specific conditions where commands are commutative:
 
@@ -411,7 +693,7 @@ $$R(s, c_1 \circ c_2) = R(s, c_2 \circ c_1)$$
 
 This demonstrates the commutativity of the reduction function under the specific condition of commutative commands.
 
-## Conclusion
+### Conclusion
 
 We have successfully proved that the reduction function $R$ satisfies both associativity and commutativity under the
 given conditions.
@@ -424,9 +706,9 @@ result under specific conditions.
 These properties provide a solid foundation for ensuring the correctness and reliability of the system, influencing its
 design and maintenance.
 
-# Comparison with popular patterns
+## Comparison with popular patterns
 
-## Model-View-Controller (MVC)
+### Model-View-Controller (MVC)
 
 - **Structure**: MVC separates data (Model) from the UI (View), with a Controller mediating between them.
 
@@ -436,7 +718,7 @@ design and maintenance.
 - **Advantage**: Unlike MVC, where controllers often become "massive" and maintain mutable state, the `Reducer` is a
   stateless functional interface, making the logic predictable and easy to test in isolation.
 
-## Model-View-ViewModel (MVVM)
+### Model-View-ViewModel (MVVM)
 
 - **Structure**: MVVM relies on data binding and ViewModels to expose state to the UI.
 
@@ -446,7 +728,7 @@ design and maintenance.
   multiple functions mutate the state directly. Here, state can only change through a formal `Transition` emitted by the
   `Reducer`.
 
-## Model-View-Intent (MVI) & Redux
+### Model-View-Intent (MVI) & Redux
 
 - **Structure**: These patterns use a unidirectional data flow (UDF) where "Intents" or "Actions" update a global or
   local store.
@@ -458,7 +740,7 @@ design and maintenance.
   **Reduce & Conquer**, the `Effect` system is built-in and type-safe, using Coroutines and `AtomicFU` to manage
   lifecycle and cancellation without external plugins.
 
-## The Elm Architecture (TEA)
+### The Elm Architecture (TEA)
 
 - **Structure**: TEA uses a `Model`, `Update`, and `Msg` cycle, famous for its reliability.
 
@@ -469,7 +751,7 @@ design and maintenance.
   and suspend functions directly within the architecture, something TEA achieves through "Commands" but with less native
   support for reactive streams.
 
-## Actor Model
+### Actor Model
 
 - **Structure**: Actors are independent, concurrent computational units that communicate via asynchronous message
   passing. Each actor maintains its own private state and processes messages sequentially from its "mailbox."
@@ -489,7 +771,7 @@ design and maintenance.
   This makes the system deterministic, easier to debug, and far more testable than the often unpredictable emergent
   behavior of raw Actor systems.
 
-## Finite State Machines (FSM)
+### Finite State Machines (FSM)
 
 - **Structure**: An FSM moves between a finite number of states based on inputs.
 
@@ -500,7 +782,7 @@ design and maintenance.
   transitions to trigger long-running operations (`Effect.Stream`) that eventually feed back into the machine as new
   commands, making it ideal for complex protocols like OAuth handshakes or multi-step file processing.
 
-## Command Query Responsibility Segregation (CQRS)
+### Command Query Responsibility Segregation (CQRS)
 
 - **Structure**: CQRS separates the models for reading and writing data.
 
@@ -511,7 +793,7 @@ design and maintenance.
   consistent snapshot of the state, ensuring that the UI or any consuming service never sees an intermediate or
   corrupted state.
 
-## Event-Driven Architecture (EDA)
+### Event-Driven Architecture (EDA)
 
 - **Structure**: Systems react to a stream of events.
 
@@ -521,7 +803,7 @@ design and maintenance.
 - **Advantage**: It provides "Structured Reactivity." Instead of a chaotic web of event listeners, every event is a
   byproduct of a state transition, providing a clear audit trail of why an event was fired.
 
-# Clean Architecture
+## Clean Architecture
 
 **Clean Architecture** is a software design pattern that separates the application's business logic into layers, each
 with its own responsibilities.
@@ -572,28 +854,28 @@ View(
 > Organize your package structure by overall model or functionality rather than by purpose.
 > This type of architecture is called **"screaming"**.
 
-## The architecture is composed of the following layers:
+### The architecture is composed of the following layers:
 
-### Entities
+#### Entities
 
 Representing the business domain, such as users, products, or orders.
 
-### Use Cases
+#### Use Cases
 
 Defining the actions that can be performed on the entities, such as logging in, creating an order, or updating a user.
 
-### Interface Adapters
+#### Interface Adapters
 
 Handling communication between the application and external systems, such as databases, networks, or file systems.
 
-### Frameworks and Drivers
+#### Frameworks and Drivers
 
 Providing the necessary infrastructure for the application to run, such as web servers, databases, or operating systems.
 
 As a general-purpose pattern, `Reduce & Conquer` can be used to implement the `Presentation` Layer, coordinate
 `Use Cases`, or manage state in other layers of `Clean Architecture`.
 
-## Working with data flows
+### Working with data flows
 
 > [!NOTE]
 > Although this example uses Jetpack Compose, the Feature can be easily consumed by any Flow-based system (CLI, Ktor
@@ -621,7 +903,7 @@ sealed interface UserCommand {
 
 sealed interface UserEvent {
     data class NotifyError(val message: String) : UserEvent
-  
+
     data class ShowSuccess(val message: String) : UserEvent
 }
 
@@ -654,7 +936,7 @@ fun UserScreen(feature: Feature<UserState, UserCommand, UserEvent>) {
 
     LaunchedEffect(Unit) {
         feature.execute(UserCommand.LoadUsers)
-        
+
         feature.events.collect { event ->
             when (event) {
                 is UserEvent.NotifyError -> {
@@ -669,7 +951,7 @@ fun UserScreen(feature: Feature<UserState, UserCommand, UserEvent>) {
 }
 ```
 
-## Testing
+### Testing
 
 It is assumed that all the important logic is contained in the `Reducer`, which means that the testing pipeline can be
 roughly represented as follows:
@@ -684,9 +966,12 @@ assertEquals(expectedEvents, actualEvents)
 assertEquals(expectedEffects, actualEffects)
 ```
 
-# Proof of concept
+## Example (Proof of Concept)
 
-A cross-platform Pokédex application built using the Compose Multiplatform UI Framework.
+![Example](media/demonstration.gif)
+
+A cross-platform Pokédex application demonstrating the **Reduce & Conquer** architecture in practice.
+This proof of concept validates the mathematical foundations while providing a real-world implementation.
 
 ```mermaid
 graph TD
@@ -744,17 +1029,17 @@ graph TD
     SortReducer["Sort Reducer"] --> ChangeSort["Change Sort"]
 ```
 
-## Features
+### Features
 
-### Navigation feature functionality:
+#### Navigation feature functionality:
 
 - Switching between Daily and Pokedex screens (functionality).
 
-### Daily feature functionality:
+#### Daily feature functionality:
 
 - Get a Pokemon of the Day card based on the current day's timestamp
 
-### Pokedex feature functionality:
+#### Pokedex feature functionality:
 
 - Getting a grid of Pokemon cards
 - Search by name
@@ -767,7 +1052,7 @@ graph TD
 > - front side contains name, image and type affiliation
 > - back side contains name and hexagonal skill graph
 
-## Libraries
+### Libraries
 
 - Jetpack Compose Multiplatform
 - Kotlin Coroutines
@@ -780,7 +1065,7 @@ graph TD
 - Kotlin Coroutines Test
 - Mockk
 
-# More examples
+## More examples
 
 - [Haskcore](https://github.com/numq/haskcore) - A modern, lightweight standalone desktop IDE with LSP support, built
   with Kotlin & Compose Desktop for Haskell development
