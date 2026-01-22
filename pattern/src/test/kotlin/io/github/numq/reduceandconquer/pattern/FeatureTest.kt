@@ -1,7 +1,5 @@
 package io.github.numq.reduceandconquer.pattern
 
-import io.gihtub.numq.reduceandconquer.pattern.BaseFeature
-import io.gihtub.numq.reduceandconquer.pattern.Feature
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flow

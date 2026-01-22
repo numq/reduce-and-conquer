@@ -1,6 +1,5 @@
 package io.github.numq.reduceandconquer.pattern
 
-import io.gihtub.numq.reduceandconquer.pattern.*
 import kotlinx.coroutines.delay
 
 internal class TestReducer : Reducer<TestState, TestCommand, TestEvent> {

@@ -1,4 +1,4 @@
-package io.gihtub.numq.reduceandconquer.pattern
+package io.github.numq.reduceandconquer.pattern
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow

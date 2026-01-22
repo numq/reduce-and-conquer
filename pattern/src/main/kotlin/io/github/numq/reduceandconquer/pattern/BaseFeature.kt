@@ -1,4 +1,4 @@
-package io.gihtub.numq.reduceandconquer.pattern
+package io.github.numq.reduceandconquer.pattern
 
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.getAndUpdate
@@ -9,7 +9,7 @@ import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.flow.*
 import kotlin.coroutines.cancellation.CancellationException
 
-abstract class BaseFeature<State, in Command, out Event>(
+internal abstract class BaseFeature<State, in Command, out Event>(
     initialState: State, private val scope: CoroutineScope, private val reducer: Reducer<State, Command, Event>
 ) : Feature<State, Command, Event> {
     private val isClosed = atomic(false)
