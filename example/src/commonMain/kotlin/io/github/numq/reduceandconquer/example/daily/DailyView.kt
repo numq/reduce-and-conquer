@@ -1,0 +1,89 @@
+package io.github.numq.reduceandconquer.example.daily
+
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
+import io.github.numq.reduceandconquer.example.notification.NotificationError
+import io.github.numq.reduceandconquer.example.notification.queue.rememberNotificationQueue
+import io.github.numq.reduceandconquer.example.pokemon.card.PokemonCard
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.jetbrains.compose.resources.stringResource
+import reduce_and_conquer.example.generated.resources.Res
+import reduce_and_conquer.example.generated.resources.daily_pokemon_of_the_day
+
+@OptIn(ExperimentalResourceApi::class)
+@Composable
+internal fun DailyView(feature: DailyFeature) {
+    val coroutineScope = rememberCoroutineScope()
+
+    val notificationQueue = rememberNotificationQueue()
+
+    val state by feature.state.collectAsState()
+
+    LaunchedEffect(Unit) {
+        feature.execute(DailyCommand.Initialize)
+
+        feature.events.filterIsInstance<DailyEvent.Error>().collect { event ->
+            notificationQueue.push(message = event.message, label = Icons.Default.ErrorOutline)
+        }
+    }
+
+    Box(
+        modifier = Modifier.fillMaxSize().background(MaterialTheme.colors.background),
+        contentAlignment = Alignment.BottomCenter
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                stringResource(Res.string.daily_pokemon_of_the_day),
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+            Box(modifier = Modifier.weight(1f).zIndex(-1f), contentAlignment = Alignment.Center) {
+                androidx.compose.animation.AnimatedVisibility(
+                    state.maxAttributeValue == null || state.card == null, enter = fadeIn(), exit = fadeOut()
+                ) {
+                    CircularProgressIndicator()
+                }
+                androidx.compose.animation.AnimatedVisibility(
+                    state.maxAttributeValue != null && state.card != null, enter = fadeIn(), exit = fadeOut()
+                ) {
+                    state.maxAttributeValue?.let { maxAttributeValue ->
+                        state.card?.let { card ->
+                            PokemonCard(
+                                modifier = Modifier.aspectRatio(.75f).padding(8.dp),
+                                card = card,
+                                maxAttributeValue = maxAttributeValue,
+                                flip = {
+                                    coroutineScope.launch {
+                                        feature.execute(DailyCommand.FlipCard)
+                                    }
+                                })
+                        }
+                    }
+                }
+            }
+        }
+        NotificationError(notificationQueue = notificationQueue)
+    }
+}

@@ -21,10 +21,12 @@ ___
 - [Overview](#overview)
     - [State](#state)
     - [Command](#command)
-    - [Event](#event)
+    - [Event](#Event)
+    - [Effect](#effect)
     - [Feature](#feature)
     - [Reducer](#reducer)
     - [Transition](#transition)
+    - [Effect System](#effect-system)
 - [Mathematical proof](#mathematical-proof)
     - [Definition](#definition)
     - [Proposition](#proposition)
@@ -32,14 +34,14 @@ ___
     - [Proof of Commutativity](#proof-of-commutativity)
     - [Conclusion](#conclusion)
 - [Comparison with popular patterns](#comparison-with-popular-patterns)
-    - [MVC](#model-view-controller)
-    - [MVP](#model-view-presenter)
-    - [MVVM](#model-view-viewmodel)
-    - [MVI](#model-view-intent)
-    - [Redux](#redux)
-    - [The Elm Architecture](#the-elm-architecture)
-    - [Event-Driven Architecture](#event-driven-architecture)
-    - [Reactive Architecture](#reactive-architecture)
+    - [Model-View-Controller (MVC)](#model-view-controller-mvc)
+    - [Model-View-ViewModel (MVVM)](#model-view-viewmodel-mvvm)
+    - [Model-View-Intent (MVI) & Redux](#model-view-intent-mvi--redux)
+    - [The Elm Architecture (TEA)](#the-elm-architecture-tea)
+    - [Actor Model](#actor-model)
+    - [Finite State Machines (FSM)](#finite-state-machines-fsm)
+    - [Command Query Responsibility Segregation (CQRS)](#command-query-responsibility-segregation-cqrs)
+    - [Event-Driven Architecture (EDA)](#event-driven-architecture-eda)
 - [Clean Architecture](#clean-architecture)
     - [Working with data flows](#working-with-data-flows)
     - [Testing](#testing)
@@ -57,6 +59,15 @@ the Compose Multiplatform UI Framework.
 ![Gif application demonstration](media/demonstration.gif)
 
 # Changelog
+
+## [3.0.0](https://github.com/numq/reduce-and-conquer/releases/tag/3.0.0)
+
+- **Major simplification and optimization**: Removed `Factory`, `Strategy`, `Processor`, `Metrics`.
+- **Dual-system architecture**: Separated concerns between `Event` (notifications) and `Effect` (side operations).
+- **Structured side effect management**: Effects now handle flow collection, deferred execution, and cancellation.
+- **Simplified core**: `BaseFeature` uses a channel for commands and a `scan` to manage state transitions.
+- **Composable reducers**: Added `combine` operator for reducer composition.
+- **Enhanced type safety**: Clear separation between events and operational effects.
 
 ## [2.0.0](https://github.com/numq/reduce-and-conquer/releases/tag/2.0.0)
 
@@ -78,93 +89,72 @@ create predictable and testable functional components.
 
 ```mermaid
 classDiagram
-    class Feature~Command, State~ {
+    class Feature~State, Command, Event~ {
         <<interface>>
         +StateFlow~State~ state
         +Flow~Event~ events
-        +((suspend () -> Unit))? invokeOnClose
         +execute(command: Command)*
-        +collect(event, joinCancellation, action)*
-        +stopCollecting(key, joinCancellation)*
-        +stopCollectingAll(joinCancellation)*
-        +cancel()*
-        +cancelAndJoin()*
-        +close()*
+        +close()
     }
     
-    class BaseFeature~Command, State~ {
-        -Reducer~Command, State~ reducer
-        -CommandProcessor~Command~ commandProcessor
-        -MutableStateFlow~State~ _state
-        -Channel~Event~ _events
-        -perform(command: Command)
-        -dispatchFailure(throwable: Throwable)
+    class BaseFeature~State, Command, Event~ {
+        -CoroutineScope scope
+        -Reducer~State, Command, Event~ reducer
+        -Channel~Command~ _commands
+        -MutableSharedFlow~Event~ _events
+        -Atomic~Map~Any, Job~~ jobs
+        -processEffect(effect: Effect)
+        -launchManaged(key: Any, block)
+        -cancelJob(key: Any)
     }
     
-    class Reducer~Command, State~ {
-        <<interface>>
-        +reduce(state: State, command: Command): Transition~State~*
-        +transition(state: State, vararg event: Event): Transition~State~
+    class Reducer~State, Command, Event~ {
+        <<fun interface>>
+        +reduce(state: State, command: Command): Transition~State, Event~*
+        +transition(state: State)
+        +action(key, fallback, block)
+        +stream(key, flow, strategy, fallback)
+        +cancel(key)
+        +combine(other: Reducer)
     }
     
-    class Transition~State~ {
+    class Transition~State, Event~ {
         +State state
         +List~Event~ events
-        +withEvents(block): Transition~State~
+        +List~Effect~ effects
     }
     
-    class CommandProcessor~Command~ {
-        <<interface>>
-        +Int activeOperations
-        +((suspend (Throwable) -> Unit))? onFailure
-        +process(action: CommandProcessorAction~Command~)*
-        +close()*
+    class Effect {
+        <<sealed interface>>
     }
     
-    class Event {
-        <<interface>>
-        +Any? payload
-        +Instant timestamp
-    }
-    
-    class Event_Collectable~T~ {
-        <<abstract>>
+    class Effect_Stream~Command~ {
         +Any key
-        +Flow~T~ flow
+        +Strategy strategy
+        +Flow~Command~ flow
+        +((Throwable) -> Command)? fallback
     }
     
-    class MetricsFeature~Command, State~ {
-        -Feature~Command, State~ feature
-        -MetricsCollector~Command~ metricsCollector
-        +execute(command)*
+    class Effect_Action~Command~ {
+        +Any key
+        +() -> Command block
+        +((Throwable) -> Command)? fallback
+    }
+    
+    class Effect_Cancel {
+        +Any key
     }
 
-    class FeatureFactory {
-        +create(initialState, reducer, strategy, ...): Feature~Command, State~
-    }
+    Effect <|.. Effect_Stream
+    Effect <|.. Effect_Action
+    Effect <|.. Effect_Cancel
     
-    class CommandProcessorAction~Command~ {
-        +Command command
-        +((suspend (Command) -> Unit)) block
-    }
-    
-    class MetricsCollector~Command~ {
-        <<interface>>
-        +recordSuccess(command, duration)*
-        +recordFailure(command, duration, throwable)*
-    }
-
     Feature <|.. BaseFeature
     BaseFeature --> Reducer
-    BaseFeature --> CommandProcessor
     BaseFeature --> Event
-    Feature <|.. MetricsFeature
-    MetricsFeature --> Feature : delegates to
-    MetricsFeature --> MetricsCollector
-    FeatureFactory --> BaseFeature
-    FeatureFactory --> CommandProcessor
-    CommandProcessor --> CommandProcessorAction
-    Event <|-- Event_Collectable
+    BaseFeature --> Effect
+    Reducer --> Transition
+   
 ```
 
 ## State
@@ -173,109 +163,120 @@ classDiagram
 > The idempotent nature of deterministic state allows you to implement functionality such as rolling back the state to a
 > previous version.
 
-A class or object that describes the current state of the presentation.
+A class or object that describes the current state of the functional unit (or component).
 
 ## Command
 
-A class or object that describes an action that entails updating state and/or raising events.
+A class or object that describes an action that entails updating state and/or producing effects.
 
 ## Event
 
-> [!NOTE]
-> It's not a side effect because reduce is a pure function that returns the same result for the same arguments.
+An interface that describes **events** caused by the execution of a command and the reduction of the state.
 
-A class or object that describes the **"Fire and forget"** event caused by the execution of a command and the reduction
-of the presentation state.<br>
+## Effect
 
-May contain a payload.
+> [!IMPORTANT]
+> Effects are the primary mechanism for managing side effects in version 3.0.0. They handle reactive streams and
+> deferred operations while maintaining separation from UI events.
 
-### Event Types in version 2.0.0:
+An interface that describes **side effects** for managing asynchronous operations and reactive streams.
 
-- `Collectable` - for reactive data streams with lifecycle management
-- `Timeout` - when command processing times out
-- `Cancellation` - when command processing is cancelled
-- `Failure` - when command processing fails with an exception
+### Effect Types in version 3.0.0:
+
+- `Stream<out Command>` - for collecting reactive data streams with automatic lifecycle management
+- `Action<out Command>` - for executing deferred operations with error handling
+- `Cancel` - for cancelling ongoing operations by key
+
+### Effect Strategies
+
+The `Effect.Stream` supports two execution strategies to manage how data flows are collected within the `BaseFeature`:
+
+- `Sequential`: Processes emitted commands one by one. It uses the standard collect mechanism, ensuring that every
+  command from the flow is executed in the order it was received.
+
+- `Restart`: Implements "latest-only" logic using collectLatest. If a new emission occurs before the previous command
+  processing is complete, the previous job is cancelled and replaced by the new one.
+
+### Event vs Effect:
+
+- **Events** are for notifications and state changes (fire-and-forget)
+- **Effects** are for managing asynchronous operations and reactive streams
 
 ## Feature
 
-An interface that takes two type parameters: Command and State.
+An interface that takes three type parameters: `State`, `Command`, and `Event`.
 
-**A functional unit** or aggregate of presentation logic within isolated functionality.
+**A functional unit** or aggregate of business logic within isolated functionality.
 
 ### Properties:
 
 - `state`: A read-only state flow that exposes the current state.
-- `events`: A flow that exposes the events emitted by the feature.
-- `invokeOnClose`: Optional cleanup callback.
+- `events`: A flow that exposes the events produced by the feature.
 
 ### Methods:
 
-- `suspend execute(command: Command)`: Suspending command submission with configurable processing strategy.
+- `suspend execute(command)`: Submits a command for processing.
+- `close()`: Terminates all operations and cleans up resources.
 
-- `suspend <T> collect(event: Event.Collectable<T>, joinCancellation: Boolean, action: suspend (T) -> Unit)`: Collects
-  reactive data streams with automatic lifecycle management.
+### BaseFeature Implementation:
 
-- `suspend <T> stopCollecting(key: T, joinCancellation: Boolean)`: Stops collecting specific stream.
+The `BaseFeature` class provides a reference implementation:
 
-- `suspend stopCollectingAll(joinCancellation: Boolean)`: Stops all active collections.
-
-- `suspend cancel()`: Cancels current transition.
-
-- `suspend cancelAndJoin()`: Cancels current transition and waits for completion.
-
-- `suspend close()`: Terminates all operations and cleans up resources.
+- Uses a `Channel` for command processing with `UNLIMITED` capacity
+- Processes commands sequentially using `scan` operator
+- Separates events from side effects:
+    - **Events** are emitted externally
+    - **Effects** are processed internally (flow collections, deferred executions)
+- Provides automatic cleanup when closed
 
 ```kotlin
-val feature = FeatureFactory().create(
+val feature = BaseFeature(
     initialState = MyState(),
-    reducer = MyReducer(),
-    strategy = CommandStrategy.Parallel(limit = 4),
-    debounceMillis = 300L,
-    timeoutMillis = 5_000L,
-    coroutineContext = Dispatchers.IO
+    scope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
+    reducer = MyReducer()
 )
 ```
 
-## Command Processing Strategies
-
-Version 2.0.0 introduces flexible command processing strategies.
-
-### Immediate
-
-Commands are processed immediately in a mutually exclusive manner.
-
-### Channel
-
-- `Unlimited`: Unlimited buffer for commands.
-
-- `Rendezvous`: No buffer, sender waits for receiver.
-
-- `Conflated`: Only the latest command is kept.
-
-- `Fixed`: Fixed capacity buffer.
-
-### Parallel
-
-Process multiple commands in parallel with configurable concurrency limit.
-
-## Configuration Options
-
-- `Debouncing`: Prevent rapid successive commands (useful for frequent inputs)
-
-- `Timeout`: Set maximum processing time per command (prevents hanging operations)
-
-- `Coroutine Context`: Custom execution context for command processing
-
 ## Reducer
 
-A functional interface that takes two generic type parameters: `Command` and `State`.
+A functional interface that takes three generic type parameters: `State`, `Command`, and `Event`.
 
-A **stateless component** responsible for reducing the input command to a new state and generating events.
+A **stateless component** responsible for reducing the input command to a new state, events, and effects.
 
 ### Methods:
 
-- `reduce(state: State, command: Command)`: Reduces the `State` with the given `Command` and returns a `Transition`.
-- `transition(state: State, vararg event: Event)`: Constructs a `Transition` with the given `State` and variadic`Event`.
+- `reduce(state, command)`: Reduces the `State` with the given `Command` and returns a `Transition` containing new
+  state, events, and effects.
+
+- `transition(state)`: Creates a `Transition` with the given `State` and empty
+  events/effects lists. This is a convenience method for creating initial transitions.
+
+### Helper DSL:
+
+- `action(key, fallback, block)`: Creates an `Effect.Action`. Useful for one-off asynchronous operations like a single
+  API call or database transaction.
+
+- `stream(key, flow, strategy, fallback)`: Creates an `Effect.Stream`. It allows the feature to react to long-running
+  data streams with a specific `Strategy`.
+
+- `cancel(key)`: Creates an `Effect.Cancel`. Immediately terminates any ongoing job (`Action` or `Stream`) associated
+  with the provided key.
+
+### Reducer Composition:
+
+Reducers can be combined using the `combine` operator, which merges both events and effects:
+
+```kotlin
+val combinedReducer = firstReducer.combine(secondReducer)
+```
+
+The combine operator works as follows:
+
+- `state`: Uses the state from the second reducer (applied after the first)
+
+- `events`: Concatenates events from both reducers (`src.events + dst.events`)
+
+- `effects`: Concatenates effects from both reducers (`src.effects + dst.effects`)
 
 ## Transition
 
@@ -284,72 +285,65 @@ A data class that represents a state transition.
 ### Properties:
 
 - `state`: The new `State`.
-- `events`: A list of `Event`s emitted during the transition, which can be empty.
 
-### Methods:
+- `events`: A list of `Event`s emitted during the transition (for notifications).
 
-- `withEvents(block: (List<Event>) -> List<Event>)`: Transforms events using the provided block.
+- `effects`: A list of `Effect`s produced during the transition (for side effect management).
 
-## Event System
+### Helper DSL:
 
-Enhanced event system with built-in error handling and lifecycle management.
+- `event(event)`: Adds a single event to the transition
 
-```kotlin
-// Collect flows in feature
+- `events(vararg events)`: Adds multiple events to the transition
 
-events.collect { event ->
-    when (event) {
-        is UserEvent.ObserveUsers -> collect(
-            event = event, joinCancellation = false, action = { users ->
-                execute(UserCommand.UpdateUsers(users = users))
-            })
-    }
-}
+- `effect(effect)`: Adds a single side effect to be processed
 
-// Handle different event types in Composable
+- `effects(vararg effects)`: Adds multiple side effects to the transition
 
-val event by feature.events.collectAsState(null)
+## Effect System
 
-LaunchedEffect(event) {
-    when (event) {
-        is PokedexEvent.ScrollToStart -> gridState.animateScrollToItem(0)
-
-        is PokedexEvent.ResetScroll -> gridState.scrollToItem(0)
-
-        else -> Unit
-    }
-}
-```
-
-## Metrics Collection
-
-Built-in metrics collection for monitoring feature performance:
+The effect system provides structured side effect management:
 
 ```kotlin
-class MyMetricsCollector : MetricsCollector<Command> {
-    override fun recordSuccess(command: Command, duration: Duration) {
-        // Log successful command execution
-    }
+class MyReducer : Reducer<MyState, MyCommand, MyEvent> {
+    override fun reduce(state: MyState, command: MyCommand): Transition<MyState, MyEvent> {
+        return when (command) {
+            is MyCommand.LoadData -> transition(state)
+                .effect(
+                    stream(
+                        key = "data_stream",
+                        flow = dataRepository.observeData(),
+                        fallback = { throwable -> MyCommand.HandleError(throwable) }
+                    )
+                )
 
-    override fun recordFailure(command: Command, duration: Duration, throwable: Throwable) {
-        // Log failed command execution
+            is MyCommand.PerformAction -> transition(state)
+                .effect(
+                    action(
+                        key = "deferred_action",
+                        block = {
+                            val result = performComplexCalculation()
+                            MyCommand.OnResult(result)
+                        },
+                        fallback = { throwable -> MyCommand.HandleError(throwable) }
+                    )
+                )
+
+            is MyCommand.Stop -> transition(state)
+                .effect(cancel(key = "data_stream"))
+        }
     }
 }
-
-val feature = MetricsFeature(
-    feature = baseFeature,
-    metricsCollector = MyMetricsCollector()
-)
 ```
 
 # Mathematical Proof
 
 ## Definition
 
-Let $S$ be the set of states, $C$ be the set of commands, and $E$ be the set of events.
+Let $S$ be the set of states, $C$ be the set of commands, $Ev$ be the set of events, and $Ef$ be the set of effects.
 
-We define a function $R: S \times C \rightarrow (S, E)$, which represents the reduction function that takes a state
-and a command as input and returns a new state and a set of events.
+We define a function $R: S \times C \rightarrow (S, Ev, Ef)$, which represents the reduction function that takes a state
+and a command as input and returns a new state, a set of events, and a set of effects.
 
 ## Proposition
 
@@ -369,20 +363,22 @@ Let $s \in S$, $c_1, c_2 \in C$. We need to show that:
 $$R(R(s, c_1), c_2) = R(s, c_1 \circ c_2)$$
 
 1. **Apply Command $c_1$**:
-   $$R(s, c_1) = (s_1, e_1)$$
-   where $s_1$ is the new state and $e_1$ is the event generated by applying $c_1$ to state $s$.
+   $$R(s, c_1) = (s_1, ev_1, ef_1)$$
+   where $s_1$ is the new state, $ev_1$ are the events generated, and $ef_1$ are the effects generated by applying $c_1$
+   to state $s$.
 
 2. **Apply Command $c_2$ to the New State $s_1$**:
-   $$R(s_1, c_2) = (s_2, e_2)$$
-   where $s_2$ is the new state after applying $c_2$ to $s_1$ and $e_2$ is the event generated.
+   $$R(s_1, c_2) = (s_2, ev_2, ef_2)$$
+   where $s_2$ is the new state after applying $c_2$ to $s_1$, $ev_2$ are the events generated, and $ef_2$ are the
+   effects generated.
 
 3. **Sequential Application of Commands $c_1$ and $c_2$**:
-   $$R(s, c_1 \circ c_2) = (s_2, e_1 \cup e_2)$$
-   where $c_1 \circ c_2$ denotes applying $c_1$ first, resulting in $s_1$ and $e_1$, and then applying $c_2$
-   to $s_1$, resulting in $s_2$ and $e_2$.
+   $$R(s, c_1 \circ c_2) = (s_2, ev_1 \cup ev_2, ef_1 \cup ef_2)$$
+   where $c_1 \circ c_2$ denotes applying $c_1$ first, resulting in $s_1$, $ev_1$, and $ef_1$, and then applying $c_2$
+   to $s_1$, resulting in $s_2$, $ev_2$, and $ef_2$.
 
-Since both $R(R(s, c_1), c_2)$ and $R(s, c_1 \circ c_2)$ yield the same state $s_2$ and the combined events $e_1
-\cup e_2$, we have:
+Since both $R(R(s, c_1), c_2)$ and $R(s, c_1 \circ c_2)$ yield the same state $s_2$, combined events $ev_1 \cup ev_2$,
+and combined effects $ef_1 \cup ef_2$, we have:
 $$R(R(s, c_1), c_2) = R(s, c_1 \circ c_2)$$
 
 This shows that the reduction function satisfies associativity in the context of command composition.
@@ -395,18 +391,20 @@ Let $s \in S$, $c_1, c_2 \in C$. We need to show that:
 $$R(s, c_1 \circ c_2) = R(s, c_2 \circ c_1)$$
 
 1. **Apply Command $c_1$ and then $c_2$**:
-   $$R(s, c_1) = (s_1, e_1)$$
-   $$R(s_1, c_2) = (s_2, e_2)$$
-   where $s_2$ is the state resulting from applying $c_2$ to $s_1$ and $e_2$ is the event generated.
+   $$R(s, c_1) = (s_1, ev_1, ef_1)$$
+   $$R(s_1, c_2) = (s_2, ev_2, ef_2)$$
+   where $s_2$ is the state resulting from applying $c_2$ to $s_1$, $ev_2$ are the events generated, and $ef_2$ are the
+   effects generated.
 
 2. **Apply Command $c_2$ and then $c_1$**:
-   $$R(s, c_2) = (s_1', e_1')$$
-   $$R(s_1', c_1) = (s_2', e_2')$$
-   where $s_2'$ is the state resulting from applying $c_1$ to $s_1'$ and $e_2'$ is the event generated.
+   $$R(s, c_2) = (s_1', ev_1', ef_1')$$
+   $$R(s_1', c_1) = (s_2', ev_2', ef_2')$$
+   where $s_2'$ is the state resulting from applying $c_1$ to $s_1'$, $ev_2'$ are the events generated, and $ef_2'$ are
+   the effects generated.
 
-Since $c_1$ and $c_2$ are commutative (i.e., $c_1 \circ c_2 = c_2 \circ c_1$), the states and events should be the
-same:
-$$(s_2, e_1 \cup e_2) = (s_2', e_1' \cup e_2')$$
+Since $c_1$ and $c_2$ are commutative (i.e., $c_1 \circ c_2 = c_2 \circ c_1$), the states, events, and effects should be
+the same:
+$$(s_2, ev_1 \cup ev_2, ef_1 \cup ef_2) = (s_2', ev_1' \cup ev_2', ef_1' \cup ef_2')$$
 
 Thus, we have:
 $$R(s, c_1 \circ c_2) = R(s, c_2 \circ c_1)$$
@@ -420,72 +418,108 @@ given conditions.
 This ensures that the reduction function behaves predictably and consistently when applying commands in different
 sequences, which is essential for ensuring the correctness and reliability of the system.
 
-The associativity property ensures that the order in which commands are applied does not affect the final state and
-events, while the commutativity property ensures that commands can be applied in any order without affecting the result
-under specific conditions.
+The associativity property ensures that the order in which commands are applied does not affect the final state, events,
+and effects, while the commutativity property ensures that commands can be applied in any order without affecting the
+result under specific conditions.
 These properties provide a solid foundation for ensuring the correctness and reliability of the system, influencing its
 design and maintenance.
 
 # Comparison with popular patterns
 
-## Model-View-Controller
+## Model-View-Controller (MVC)
 
-The _MVC_ pattern separates concerns into three parts: `Model`, `View`, and `Controller`.<br>
-The `Model` represents the data, the `View` represents the UI,
-and the `Controller` handles user input and updates the `Model`.<br>
-In contrast, the _Reduce & Conquer_ combines the `Model` and `Controller` into a single unit.
+- **Structure**: MVC separates data (Model) from the UI (View), with a Controller mediating between them.
 
-## Model-View-Presenter
+- **Contrast**: In **Reduce & Conquer**, the `Feature` and `Reducer` replace both the Model's state logic and the
+  Controller's orchestration.
 
-The _MVP_ pattern is similar to _MVC_,
-but it separates concerns into three parts: `Model`, `View`, and`Presenter`.<br>
-The `Presenter` acts as an intermediary between the `Model` and `View`, handling user input and updating
-the `Model`.<br>
-The _Reduce & Conquer_ is more lightweight than _MVP_, as it does not require a separate `Presenter` layer.
+- **Advantage**: Unlike MVC, where controllers often become "massive" and maintain mutable state, the `Reducer` is a
+  stateless functional interface, making the logic predictable and easy to test in isolation.
 
-## Model-View-ViewModel
+## Model-View-ViewModel (MVVM)
 
-The _MVVM_ pattern is similar to _MVP_,
-but it uses a `ViewModel` as an intermediary between the `Model`and `View`.<br>
-The `ViewModel` exposes data and commands to the `View`, which can then bind to them.<br>
-The _Reduce & Conquer_ is more flexible than _MVVM_, as it does not require a separate `ViewModel` layer.
+- **Structure**: MVVM relies on data binding and ViewModels to expose state to the UI.
 
-## Model-View-Intent
+- **Contrast**: While a `Feature` can be used inside a ViewModel, it is not bound to the UI lifecycle.
 
-The _MVI_ pattern is similar to _MVVM_,
-but it uses an `Intent` as an intermediary between the `Model` and`View`.<br>
-The `Intent` represents user input and intent, which is then used to update the `Model`.<br>
-The _Reduce & Conquer_ is more simple than _MVI_, as it does not require an `Intent` layer.
+- **Advantage**: **Reduce & Conquer** provides a more rigid contract. MVVM often leads to fragmented logic where
+  multiple functions mutate the state directly. Here, state can only change through a formal `Transition` emitted by the
+  `Reducer`.
 
-## Redux
+## Model-View-Intent (MVI) & Redux
 
-The _Redux_ pattern uses a global store to manage application state.<br>
-Actions are dispatched to update the store, which then triggers updates to connected components.<br>
-The _Reduce & Conquer_ uses a local state flow instead of a global store,
-which makes it more scalable for large applications.
+- **Structure**: These patterns use a unidirectional data flow (UDF) where "Intents" or "Actions" update a global or
+  local store.
 
-## The Elm Architecture
+- **Contrast**: **Reduce & Conquer** refines the MVI concept by strictly separating **Events** (one-time notifications)
+  from **Effects** (asynchronous operations).
 
-The _TEA_ pattern uses a functional programming approach to manage application state.<br>
-The architecture consists of four parts: `Model`, `Update`, `View`, and `Input`.<br>
-The `Model` represents application state,
-`Update` functions update the `Model` based on user input and commands,
-`View`functions render the `Model` to the UI, and `Input` functions handle user input.<br>
-The _Reduce & Conquer_ uses a similar approach to _TEA_, but with a focus on reactive programming and
-coroutines.
+- **Advantage**: Redux often struggles with side effect "middleware" (like Thunk or Saga) which can be verbose. In
+  **Reduce & Conquer**, the `Effect` system is built-in and type-safe, using Coroutines and `AtomicFU` to manage
+  lifecycle and cancellation without external plugins.
 
-## Event-Driven Architecture
+## The Elm Architecture (TEA)
 
-The _EDA_ pattern involves processing events as they occur.<br>
-In this pattern, components are decoupled from each other, and events are used to communicate between components.<br>
-The _Reduce & Conquer_ uses events to communicate between components,
-but it also provides a more structured approach to managing state transitions.
+- **Structure**: TEA uses a `Model`, `Update`, and `Msg` cycle, famous for its reliability.
 
-## Reactive Architecture
+- **Contrast**: **Reduce & Conquer** is essentially a JVM/Kotlin adaptation of TEA, but optimized for the modern
+  Coroutine-based ecosystem.
 
-The _Reactive Architecture_ pattern involves using reactive programming to manage complex systems.<br>
-In this pattern, components are designed to react to changes in their inputs.<br>
-The _Reduce & Conquer_ uses reactive programming to manage state transitions and emit events.
+- **Advantage**: It introduces the `Effect.Stream` and `Effect.Action` types, which allow for native handling of Flow
+  and suspend functions directly within the architecture, something TEA achieves through "Commands" but with less native
+  support for reactive streams.
+
+## Actor Model
+
+- **Structure**: Actors are independent, concurrent computational units that communicate via asynchronous message
+  passing. Each actor maintains its own private state and processes messages sequentially from its "mailbox."
+
+- **Contrast**: A `Feature` operates similarly to an Actor: it encapsulates state, processes messages (`Command`) via a
+  `Channel` (serving as the mailbox), and isolates its internal logic. However, **Reduce & Conquer** provides a more
+  formal mathematical structure with explicit state transitions and a dedicated side effect system built directly into
+  the architecture.
+
+- **Advantage**: Unlike traditional Actor frameworks (like Akka) which require complex setup and explicit supervision
+  hierarchies, **Reduce & Conquer** is lightweight and leverages Kotlin-native structured concurrency (
+  `Channel.UNLIMITED` +
+  `scan` operator) to guarantee thread-safe sequential processing. Crucially, while Actors often scatter business logic
+  across various message handlers, **Reduce & Conquer** centralizes all transition logic in a pure `Reducer` function —
+  following the mathematical model:
+  $$S \times C \rightarrow (S, Ev, Ef)$$
+  This makes the system deterministic, easier to debug, and far more testable than the often unpredictable emergent
+  behavior of raw Actor systems.
+
+## Finite State Machines (FSM)
+
+- **Structure**: An FSM moves between a finite number of states based on inputs.
+
+- **Contrast**: The `Reducer` is a mathematical implementation of a State Transition Function:
+  $S \times C \rightarrow (S, Ev, Ef)$.
+
+- **Advantage**: While many FSM libraries are purely synchronous, **Reduce & Conquer** is an "Async-FSM." It allows
+  transitions to trigger long-running operations (`Effect.Stream`) that eventually feed back into the machine as new
+  commands, making it ideal for complex protocols like OAuth handshakes or multi-step file processing.
+
+## Command Query Responsibility Segregation (CQRS)
+
+- **Structure**: CQRS separates the models for reading and writing data.
+
+- **Contrast**: The `execute(Command)` method represents the "Write" side, while the `StateFlow` represents the "Read"
+  side (the projection).
+
+- **Advantage**: By using a `Reducer`, the "Write" logic is centralized and deterministic. The "Read" side is always a
+  consistent snapshot of the state, ensuring that the UI or any consuming service never sees an intermediate or
+  corrupted state.
+
+## Event-Driven Architecture (EDA)
+
+- **Structure**: Systems react to a stream of events.
+
+- **Contrast**: **Reduce & Conquer** treats every input as a `Command` and can produce a stream of `Event` objects for
+  external subscribers.
+
+- **Advantage**: It provides "Structured Reactivity." Instead of a chaotic web of event listeners, every event is a
+  byproduct of a state transition, providing a clear audit trail of why an event was fired.
 
 # Clean Architecture
 
@@ -522,8 +556,8 @@ graph LR
 
 ```kotlin
 View(
-    Feature(
-        Reducer(
+    Feature(           // Manages Events (notifications) and Effects (side operations)
+        Reducer(       // Produces State, Events, and Effects
             UseCase(
                 Repository(
                     Service
@@ -556,115 +590,84 @@ Handling communication between the application and external systems, such as dat
 
 Providing the necessary infrastructure for the application to run, such as web servers, databases, or operating systems.
 
-`Reduce & Conquer` is a part of `Frameworks and Drivers`, as it is an architectural pattern that provides an
-implementation of presentation.
-
-> [!TIP]
-> Follow the **Feature per View principle** and achieve decomposition by dividing reducers into sub-reducers.
+As a general-purpose pattern, `Reduce & Conquer` can be used to implement the `Presentation` Layer, coordinate
+`Use Cases`, or manage state in other layers of `Clean Architecture`.
 
 ## Working with data flows
 
-The `Feature` class contains [methods that implement the flow mechanism](#methods), but you can also implement your own
-using the principles described below.
+> [!NOTE]
+> Although this example uses Jetpack Compose, the Feature can be easily consumed by any Flow-based system (CLI, Ktor
+> server-side, etc.)
 
-Let's say there is a **command** that calls a **use case**, which returns a `flow` with data that needs to be stored in
-the **state**.
-
-As a container, `flow` is only useful as long as it is collected, which means it can be classified as **a one-time
-payload**.
-
-As should be done with this kind of data, `flow` must be processed using the appropriate mechanism - **events**,
-which **must begin to be collected before executing the command** that returns the **event** containing `flow`.
-
-Thus, we can set an arbitrary `flow` processing strategy, as well as **manage the lifecycle of the collector using
-coroutines**, without going beyond the functional paradigm.
-
-Here is an example implementation of flow collection:
+Version 3.0.0 simplifies working with data flows through the `Effect.Stream` type. The `BaseFeature` automatically
+manages the lifecycle of flow collections.
 
 ```kotlin
 data class User(val id: String)
 
 interface UserRepository {
-    suspend fun observeUsers(): Result<Flow<List<User>>>
+    fun observeUsers(): Flow<List<User>>
 }
 
-class ObserveUsers(private val userRepository: UserRepository) {
-    suspend fun execute() = userRepository.observeUsers()
-}
-
-data class UserState(
-    val users: List<User> = emptyList(),
-)
+data class UserState(val users: List<User> = emptyList())
 
 sealed interface UserCommand {
-    data object ObserveUsers : UserCommand
+    data object LoadUsers : UserCommand
 
     data class UpdateUsers(val users: List<User>) : UserCommand
-}
 
-enum class UserEventKey {
-    OBSERVE_USERS
+    data class HandleError(val throwable: Throwable) : UserCommand
 }
 
 sealed interface UserEvent {
-    data class ObserveUsers(
-        override val flow: Flow<List<User>>
-    ) : UserEvent, Event.Collectable<List<User>>() {
-        override val key = UserEventKey.OBSERVE_USERS
-    }
+    data class NotifyError(val message: String) : UserEvent
+  
+    data class ShowSuccess(val message: String) : UserEvent
 }
 
 class UserReducer(
-    private val observeUsers: ObserveUsers,
-) : Reducer<UserCommand, UserState> {
-    override suspend fun reduce(state: UserState, command: UserCommand) = when (command) {
-        is UserCommand.ObserveUsers -> observeUsers.execute().fold(
-            onSuccess = { flow: Flow<User> ->
-                transition(state, UserEvent.ObserveUsers(flow = flow))
-            },
-            onFailure = { throwable ->
-                transition(state, Event.Failure(throwable = throwable))
-            }
-        )
+    private val userRepository: UserRepository,
+) : Reducer<UserState, UserCommand, UserEvent> {
+    override fun reduce(state: UserState, command: UserCommand): Transition<UserState, UserEvent> {
+        return when (command) {
+            UserCommand.LoadUsers -> transition(state)
+                .effect(
+                    stream(
+                        key = "users_flow",
+                        flow = userRepository.observeUsers().map(UserCommand::UpdateUsers),
+                        fallback = { throwable -> UserCommand.HandleError(throwable) }
+                    )
+                )
 
-        is UserCommand.UpdateUsers -> transition(state.copy(users = command.users))
+            is UserCommand.UpdateUsers -> transition(state.copy(users = command.users))
+                .event(UserEvent.ShowSuccess("Users updated"))
+
+            is UserCommand.HandleError -> transition(state)
+                .event(UserEvent.NotifyError("Error: ${command.throwable.message}"))
+        }
     }
 }
 
-class UserFeature(
-    private val feature: Feature<UserCommand, UserState>
-) : Feature<UserCommand, UserState> by feature {
-    private val coroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+@Composable
+fun UserScreen(feature: Feature<UserState, UserCommand, UserEvent>) {
+    val state by feature.state.collectAsState()
 
-    init {
-        coroutineScope.launch {
-            events.collect { event ->
-                when (event) {
-                    is UserEvent.ObserveUsers -> collect(
-                        event = event, joinCancellation = false, action = { users ->
-                            execute(UserCommand.UpdateUsers(users = users))
-                        })
+    LaunchedEffect(Unit) {
+        feature.execute(UserCommand.LoadUsers)
+        
+        feature.events.collect { event ->
+            when (event) {
+                is UserEvent.NotifyError -> {
+                    // Show error notification
+                    showSnackbar(event.message)
                 }
             }
         }
     }
 
-    override val invokeOnClose: (suspend () -> Unit)? get() = { coroutineScope.cancel() }
-}
-
-single {
-    UserFeature(
-        feature = FeatureFactory().create(
-            initialState = UserState(),
-            reducer = UserReducer(observeUsers = get()),
-            strategy = CommandStrategy.Immediate
-        )
-    )
+    // UI rendering...
 }
 ```
-
-The new collect method automatically manages the lifecycle of flow collections, eliminating the need for manual
-coroutine management.
 
 ## Testing
 
@@ -672,14 +675,14 @@ It is assumed that all the important logic is contained in the `Reducer`, which 
 roughly represented as follows:
 
 ```kotlin
-val (actualState, actualEvents) = feature.execute(command)
+val reducer = MyReducer()
+
+val (actualState, actualEvents, actualEffects) = reducer.reduce(initialState, command)
 
 assertEquals(expectedState, actualState)
-
 assertEquals(expectedEvents, actualEvents)
+assertEquals(expectedEffects, actualEffects)
 ```
-
-With version 2.0.0, you can also test different command processing strategies and error scenarios.
 
 # Proof of concept
 

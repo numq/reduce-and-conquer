@@ -10,12 +10,10 @@ kotlin = "1.9.22"
 kotlinx-atomicfu = "0.25.0"
 kotlinx-datetime = "0.6.0-RC.2"
 kotlinx-serialization-json = "1.6.3"
-kotlinx-serialization-plugin = "1.9.22"
 koin = "3.6.0-wasm-alpha2"
 uuid = "0.8.4"
 kotlinx-coroutines = "1.8.0"
-mockk = "1.13.10"
-mockk-common = "1.12.5"
+mockk = "1.12.5"
 
 [libraries]
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
@@ -30,12 +28,11 @@ uuid = { module = "com.benasher44:uuid", version.ref = "uuid" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
-mockk-common = { module = "io.mockk:mockk-common", version.ref = "mockk-common" }
+mockk-common = { module = "io.mockk:mockk-common", version.ref = "mockk" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
-androidLibrary = { id = "com.android.library", version.ref = "agp" }
 jetbrainsCompose = { id = "org.jetbrains.compose", version.ref = "compose-plugin" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinxAtomicfu = { id = "org.jetbrains.kotlinx.atomicfu", version.ref = "kotlinx-atomicfu" }
-kotlinxSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlinx-serialization-plugin" }
+kotlinxSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

@@ -1,10 +1,11 @@
 *.iml
-.gradle
+.gradle/
+.kotlin/
 **/.idea/
 **/build/
+local.properties
 xcuserdata
 !src/**/build/
-local.properties
 .DS_Store
 captures
 .externalNativeBuild
