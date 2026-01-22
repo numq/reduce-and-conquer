@@ -71,7 +71,6 @@ demonstration vehicle.
 - **Dual-system architecture**: Separated concerns between `Event` (notifications) and `Effect` (side operations).
 - **Structured side effect management**: Effects now handle flow collection, deferred execution, and cancellation.
 - **Simplified core**: `BaseFeature` uses a channel for commands and a `scan` to manage state transitions.
-- **Composable reducers**: Added `combine` operator for reducer composition.
 - **Enhanced type safety**: Clear separation between events and operational effects.
 
 ### [2.0.0](https://github.com/numq/reduce-and-conquer/releases/tag/2.0.0)
