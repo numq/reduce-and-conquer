@@ -173,27 +173,37 @@ fundamentally platform-agnostic. The same mathematical principles apply across a
 <summary>Typescript</summary>
 
 ```typescript
-// React/TypeScript (Web)
-type Reducer<S, C, E> = (state: S, command: C) => Transition<S, E>;
-
-interface Transition<S, E> {
+interface Transition<S, C, E> {
     state: S;
     events: E[];
     effects: Effect<C>[];
 }
 
-// Example usage with React Hooks
+type Reducer<S, C, E> = (state: S, command: C) => Transition<S, C, E>;
+
 const useFeature = <S, C, E>(
     initialState: S,
-    reducer: Reducer<S, C, E>
+    reducer: Reducer<S, C, E>,
+    onEvent?: (event: E) => void
 ) => {
-    const [state, setState] = useState(initialState);
+    const processTransition = (transition: Transition<S, C, E>) => {
+        transition.events.forEach(e => onEvent?.(e));
+        transition.effects.forEach(effect => {
+
+        });
+    };
+
+    const [state, dispatch] = useReducer((currentState: S, command: C) => {
+        const transition = reducer(currentState, command);
+
+        setTimeout(() => processTransition(transition), 0);
+
+        return transition.state;
+    }, initialState);
 
     const execute = useCallback((command: C) => {
-        const transition = reducer(state, command);
-        setState(transition.state);
-        transition.effects.forEach(processEffect);
-    }, [state, reducer]);
+        dispatch(command);
+    }, []);
 
     return {state, execute};
 };
@@ -205,36 +215,47 @@ const useFeature = <S, C, E>(
 <summary>Swift</summary>
 
 ```swift
-// SwiftUI (iOS/macOS)
-protocol Reducer {
-    associatedtype State
-    associatedtype Command  
-    associatedtype Event
-
-    func reduce(state: State, command: Command) -> Transition<State, Event>
-}
-
-struct Transition<State, Event> {
+struct Transition<State, Command, Event> {
     let state: State
     let events: [Event]
     let effects: [Effect<Command>]
 }
 
-// SwiftUI View integration
-@Observable
-class Feature<State, Command, Event>: ObservableObject {
-    @Published private(set) var state: State
-    private let reducer: any Reducer<State, Command, Event>
+protocol Reducer {
+    associatedtype State
+    associatedtype Command
+    associatedtype Event
 
-    init(initialState: State, reducer: any Reducer<State, Command, Event>) {
+    func reduce(state: State, command: Command) -> Transition<State, Command, Event>
+}
+
+@Observable
+final class Feature<R: Reducer> {
+    private(set) var state: R.State
+    private let reducer: R
+    
+    var events: AsyncStream<R.Event> { /* ... */ }
+
+    init(initialState: R.State, reducer: R) {
         self.state = initialState
         self.reducer = reducer
     }
-    
-    func execute(_ command: Command) {
+
+    @MainActor
+    func execute(_ command: R.Command) {
         let transition = reducer.reduce(state: state, command: command)
-        state = transition.state
-        transition.effects.forEach(processEffect)
+        
+        self.state = transition.state
+        
+        transition.events.forEach { processEvent($0) }
+        
+        transition.effects.forEach { effect in
+            Task {
+                if let nextCommand = await processEffect(effect) {
+                    execute(nextCommand)
+                }
+            }
+        }
     }
 }
 ```
@@ -245,33 +266,64 @@ class Feature<State, Command, Event>: ObservableObject {
 <summary>Dart</summary>
 
 ```dart
-// Flutter
-abstract class Reducer<State, Command, Event> {
-  Transition<State, Event> reduce(State state, Command command);
-}
-
-class Transition<State, Event> {
+class Transition<State, Command, Event> {
   final State state;
   final List<Event> events;
   final List<Effect<Command>> effects;
 
-  Transition(this.state, this.events, this.effects);
+  Transition({
+    required this.state, 
+    this.events = const [], 
+    this.effects = const []
+  });
 }
 
-// Flutter Widget integration
-class FeatureBuilder<State, Command, Event> extends StatefulWidget {
-  final Reducer<State, Command, Event> reducer;
-  final State initialState;
-  final Widget Function(BuildContext, State, Function(Command)) builder;
+abstract class Reducer<State, Command, Event> {
+  Transition<State, Command, Event> reduce(State state, Command command);
+}
 
-  FeatureBuilder({
-    required this.reducer,
-    required this.initialState,
-    required this.builder,
-  });
+class Feature<State, Command, Event> {
+  final Reducer<State, Command, Event> _reducer;
+  final _stateController = BehaviorSubject<State>();
+  
+  Stream<State> get state => _stateController.stream;
+  
+  Feature(State initialState, this._reducer) {
+    _stateController.add(initialState);
+  }
+
+  void execute(Command command) {
+    final currentState = _stateController.value;
+    final transition = _reducer.reduce(currentState, command);
+    
+    _stateController.add(transition.state);
+    
+    for (var effect in transition.effects) {
+      _processEffect(effect);
+    }
+  }
+
+  void _processEffect(Effect<Command> effect) async {
+  
+  }
+}
+
+class FeatureBuilder<State, Command, Event> extends StatelessWidget {
+  final Feature<State, Command, Event> feature;
+  final Widget Function(BuildContext context, State state, void Function(Command) execute) builder;
+
+  const FeatureBuilder({required this.feature, required this.builder});
 
   @override
-  _FeatureBuilderState createState() => _FeatureBuilderState();
+  Widget build(BuildContext context) {
+    return StreamBuilder<State>(
+      stream: feature.state,
+      builder: (context, snapshot) {
+        final state = snapshot.data ?? feature.initialState;
+        return builder(context, state, feature.execute);
+      },
+    );
+  }
 }
 ```
 
@@ -281,34 +333,46 @@ class FeatureBuilder<State, Command, Event> extends StatefulWidget {
 <summary>Rust</summary>
 
 ```rust
-// Rust (Systems Programming)
-pub trait Reducer {
+pub struct Transition<S, C, E> {
+    pub state: S,
+    pub events: Vec<E>,
+    pub effects: Vec<Effect<C>>,
+}
+
+pub trait Reducer: Send + Sync {
     type State;
     type Command;
     type Event;
 
     fn reduce(&self, state: Self::State, command: Self::Command) 
-        -> Transition<Self::State, Self::Event>;
+        -> Transition<Self::State, Self::Command, Self::Event>;
 }
 
-pub struct Transition<S, E> {
-    pub state: S,
-    pub events: Vec<E>,
-    pub effects: Vec<Effect<Command>>,
+pub struct Feature<R: Reducer> {
+    state: Arc<Mutex<R::State>>,
+    reducer: Arc<R>,
+    command_tx: mpsc::UnboundedSender<R::Command>,
 }
 
-// Async/await support with tokio
-impl<S, C, E> Feature<S, C, E>
-where
-    S: Clone + Send + 'static,
-    C: Send + 'static,
-    E: Send + 'static,
+impl<R> Feature<R> 
+where 
+    R: Reducer + 'static,
+    R::State: Send + Clone,
+    R::Command: Send,
+    R::Event: Send,
 {
-    pub async fn execute(&self, command: C) -> Result<(), Box<dyn Error>> {
-        let transition = self.reducer.reduce(self.state.lock().unwrap().clone(), command);
-        *self.state.lock().unwrap() = transition.state;
-        self.process_effects(transition.effects).await;
-        Ok(())
+    pub async fn execute(&self, command: R::Command) {
+        let mut state_guard = self.state.lock().unwrap();
+        
+        let transition = self.reducer.reduce(state_guard.clone(), command);
+        
+        *state_guard = transition.state;
+        
+        drop(state_guard);
+
+        for effect in transition.effects {
+            self.process_effect(effect).await;
+        }
     }
 }
 ```
@@ -319,31 +383,38 @@ where
 <summary>Go</summary>
 
 ```go
-// Go (Backend/Cloud)
-type Reducer[S any, C any, E any] interface {
-    Reduce(state S, command C) Transition[S, E]
-}
-
-type Transition[S any, E any] struct {
-    State S
+type Transition[S any, C any, E any] struct {
+    State   S
     Events  []E
     Effects []Effect[C]
 }
 
-// Goroutine-safe implementation
+type Reducer[S any, C any, E any] interface {
+    Reduce(state S, command C) Transition[S, C, E]
+}
+
 type Feature[S any, C any, E any] struct {
-    state S
-    mu sync.RWMutex
+    mu      sync.RWMutex
+    state   S
     reducer Reducer[S, C, E]
+    commands chan C 
 }
 
 func (f *Feature[S, C, E]) Execute(command C) {
-    f.mu.Lock()
-    defer f.mu.Unlock()
+    f.commands <- command
+}
 
-    transition := f.reducer.Reduce(f.state, command)
-    f.state = transition.State
-    go f.processEffects(transition.Effects)
+func (f *Feature[S, C, E]) loop() {
+    for cmd := range f.commands {
+        f.mu.Lock()
+        transition := f.reducer.Reduce(f.state, cmd)
+        f.state = transition.State
+        f.mu.Unlock()
+
+        for _, effect := range transition.Effects {
+            go f.processEffect(effect)
+        }
+    }
 }
 ```
 
@@ -353,24 +424,46 @@ func (f *Feature[S, C, E]) Execute(command C) {
 <summary>Haskell</summary>
 
 ```haskell
--- Haskell (Pure Functional)
-type Reducer state command event = 
-  state -> command -> (state, [event], [Effect command])
+import Control.Monad.State
+import Control.Monad.Writer
+import Data.DList (DList, fromList, toList)
 
-data Transition state event = Transition
-  { state :: state
-  , events :: [event]
-  , effects :: [Effect]
+data SideEffects c e = SideEffects
+  { outEvents  :: DList e
+  , outEffects :: DList (Effect c)
   }
 
--- Using State monad transformer
-runFeature :: Reducer s c e -> s -> [c] -> (s, [e])
-runFeature reducer initialState commands =
-  foldl' step (initialState, []) commands
-  where
-    step (s, es) cmd =
-      let Transition s' es' _ = reducer s cmd
-      in (s', es ++ es')
+instance Semigroup (SideEffects c e) where
+  (SideEffects e1 f1) <> (SideEffects e2 f2) = 
+    SideEffects (e1 <> e2) (f1 <> f2)
+
+instance Monoid (SideEffects c e) where
+  mempty = SideEffects mempty mempty
+
+type ReducerM s c e = c -> StateT s (Writer (SideEffects c e)) ()
+
+emitEvent :: e -> StateT s (Writer (SideEffects c e)) ()
+emitEvent e = tell $ SideEffects (fromList [e]) mempty
+
+emitEffect :: Effect c -> StateT s (Writer (SideEffects c e)) ()
+emitEffect f = tell $ SideEffects mempty (fromList [f])
+
+counterReducer :: ReducerM Int String String
+counterReducer "increment" = do
+  modify (+1)
+  emitEvent "Incremented"
+  
+counterReducer "reset" = do
+  put 0
+  emitEvent "ResetDone"
+  emitEffect (Cancel "timer")
+
+counterReducer _ = return ()
+
+runReducer :: ReducerM s c e -> s -> c -> (s, [e], [Effect c])
+runReducer reducer s cmd = 
+  let ((_, nextState), sideEffects) = runWriter (runStateT (reducer cmd) s)
+  in (nextState, toList $ outEvents sideEffects, toList $ outEffects sideEffects)
 ```
 
 </details>
