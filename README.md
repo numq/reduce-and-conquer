@@ -70,7 +70,7 @@ demonstration vehicle.
 - **Major simplification and optimization**: Removed `Factory`, `Strategy`, `Processor`, `Metrics`.
 - **Dual-system architecture**: Separated concerns between `Event` (notifications) and `Effect` (side operations).
 - **Structured side effect management**: Effects now handle flow collection, deferred execution, and cancellation.
-- **Simplified core**: `BaseFeature` uses a channel for commands and a `scan` to manage state transitions.
+- **Simplified core**: `ReducerFeature` uses a channel for commands and a `scan` to manage state transitions.
 - **Enhanced type safety**: Clear separation between events and operational effects.
 
 ### [2.0.0](https://github.com/numq/reduce-and-conquer/releases/tag/2.0.0)
@@ -484,11 +484,11 @@ classDiagram
         <<interface>>
         +StateFlow~State~ state
         +Flow~Event~ events
-        +execute(command: Command)*
+        +execute(command: Command): suspend*
         +close()
     }
     
-    class BaseFeature~State, Command, Event~ {
+    class ReducerFeature~State, Command, Event~ {
         -CoroutineScope scope
         -Reducer~State, Command, Event~ reducer
         -Channel~Command~ _commands
@@ -539,10 +539,10 @@ classDiagram
     Effect <|.. Effect_Action
     Effect <|.. Effect_Cancel
     
-    Feature <|.. BaseFeature
-    BaseFeature --> Reducer
-    BaseFeature --> Event
-    BaseFeature --> Effect
+    Feature <|.. ReducerFeature
+    ReducerFeature --> Reducer
+    ReducerFeature --> Event
+    ReducerFeature --> Effect
     Reducer --> Transition
    
 ```
@@ -579,7 +579,7 @@ An interface that describes **side effects** for managing asynchronous operation
 
 #### Effect Strategies
 
-The `Effect.Stream` supports two execution strategies to manage how data flows are collected within the `BaseFeature`:
+The `Effect.Stream` supports two execution strategies to manage how data flows are collected within the`ReducerFeature`:
 
 - `Sequential`: Processes emitted commands one by one. It uses the standard collect mechanism, ensuring that every
   command from the flow is executed in the order it was received.
@@ -598,6 +598,10 @@ An interface that takes three type parameters: `State`, `Command`, and `Event`.
 
 **A functional unit** or aggregate of business logic within isolated functionality.
 
+> [!NOTE]
+> The `Feature` interface extends `AutoCloseable`, allowing it to be used in try-with-resources patterns (Java) or `use`
+> blocks (Kotlin) for automatic resource management.
+
 #### Properties:
 
 - `state`: A read-only state flow that exposes the current state.
@@ -608,9 +612,35 @@ An interface that takes three type parameters: `State`, `Command`, and `Event`.
 - `suspend execute(command)`: Submits a command for processing.
 - `close()`: Terminates all operations and cleans up resources.
 
-#### BaseFeature Implementation:
+#### Creating a Feature:
 
-The `BaseFeature` class provides a reference implementation:
+- `invoke(initialState: State, scope: CoroutineScope, reducer: Reducer<State, Command, Event>, vararg initialCommands: Command)`: Returns a standard implementation of the Feature.
+
+##### Delegation (Recommended)
+
+```kotlin
+class SomeFeature(reducer: SomeReducer) : Feature<SomeState, SomeCommand, SomeEvent> by Feature(
+    initialState = SomeState(),
+    scope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
+    reducer = reducer,
+    initialCommands = SomeCommand.LoadInitialData
+)
+```
+
+##### Instantiation
+
+```kotlin
+val feature = Feature<SomeState, SomeCommand, SomeEvent>(
+    initialState = SomeState(),
+    scope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
+    reducer = SomeReducer(),
+    initialCommands = SomeCommand.LoadInitialData
+)
+```
+
+### ReducerFeature:
+
+The `ReducerFeature` class provides a reference implementation:
 
 - Uses a `Channel` for command processing with `UNLIMITED` capacity
 - Processes commands sequentially using `scan` operator
@@ -618,14 +648,6 @@ The `BaseFeature` class provides a reference implementation:
     - **Events** are emitted externally
     - **Effects** are processed internally (flow collections, deferred executions)
 - Provides automatic cleanup when closed
-
-```kotlin
-val feature = BaseFeature(
-    initialState = MyState(),
-    scope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
-    reducer = MyReducer()
-)
-```
 
 ### Reducer
 
@@ -679,33 +701,29 @@ A data class that represents a state transition.
 The effect system provides structured side effect management:
 
 ```kotlin
-class MyReducer : Reducer<MyState, MyCommand, MyEvent> {
-    override fun reduce(state: MyState, command: MyCommand): Transition<MyState, MyEvent> {
-        return when (command) {
-            is MyCommand.LoadData -> transition(state)
-                .effect(
-                    stream(
-                        key = "data_stream",
-                        flow = dataRepository.observeData(),
-                        fallback = { throwable -> MyCommand.HandleError(throwable) }
-                    )
-                )
+class SomeReducer : Reducer<SomeState, SomeCommand, SomeEvent> {
+    override fun reduce(state: SomeState, command: SomeCommand) = when (command) {
+        is SomeCommand.LoadData -> transition(state).effect(
+            stream(
+                key = "data_stream",
+                flow = dataRepository.observeData(),
+                fallback = { throwable -> SomeCommand.HandleError(throwable) }
+            )
+        )
 
-            is MyCommand.PerformAction -> transition(state)
-                .effect(
-                    action(
-                        key = "deferred_action",
-                        block = {
-                            val result = performComplexCalculation()
-                            MyCommand.OnResult(result)
-                        },
-                        fallback = { throwable -> MyCommand.HandleError(throwable) }
-                    )
-                )
+        is SomeCommand.PerformAction -> transition(state).effect(
+            action(
+                key = "deferred_action",
+                block = {
+                    val result = performComplexCalculation()
+                    
+                    SomeCommand.OnResult(result)
+                },
+                fallback = { throwable -> SomeCommand.HandleError(throwable) }
+            )
+        )
 
-            is MyCommand.Stop -> transition(state)
-                .effect(cancel(key = "data_stream"))
-        }
+        is SomeCommand.Stop -> transition(state).effect(cancel(key = "data_stream"))
     }
 }
 ```
@@ -973,7 +991,7 @@ As a general-purpose pattern, `Reduce & Conquer` can be used to implement the `P
 > Although this example uses Jetpack Compose, the Feature can be easily consumed by any Flow-based system (CLI, Ktor
 > server-side, etc.)
 
-Version 3.0.0 simplifies working with data flows through the `Effect.Stream` type. The `BaseFeature` automatically
+Version 3.0.0 simplifies working with data flows through the `Effect.Stream` type. The `ReducerFeature` automatically
 manages the lifecycle of flow collections.
 
 ```kotlin
@@ -1002,33 +1020,33 @@ sealed interface UserEvent {
 class UserReducer(
     private val userRepository: UserRepository,
 ) : Reducer<UserState, UserCommand, UserEvent> {
-    override fun reduce(state: UserState, command: UserCommand): Transition<UserState, UserEvent> {
-        return when (command) {
-            UserCommand.LoadUsers -> transition(state)
-                .effect(
-                    stream(
-                        key = "users_flow",
-                        flow = userRepository.observeUsers().map(UserCommand::UpdateUsers),
-                        fallback = { throwable -> UserCommand.HandleError(throwable) }
-                    )
-                )
+    override fun reduce(state: UserState, command: UserCommand) = when (command) {
+        UserCommand.LoadUsers -> transition(state).effect(
+            stream(
+                key = "users_flow",
+                flow = userRepository.observeUsers().map(UserCommand::UpdateUsers),
+                fallback = { throwable -> UserCommand.HandleError(throwable) }
+            )
+        )
 
-            is UserCommand.UpdateUsers -> transition(state.copy(users = command.users))
-                .event(UserEvent.ShowSuccess("Users updated"))
+        is UserCommand.UpdateUsers -> transition(state.copy(users = command.users)).event(UserEvent.ShowSuccess("Users updated"))
 
-            is UserCommand.HandleError -> transition(state)
-                .event(UserEvent.NotifyError("Error: ${command.throwable.message}"))
-        }
+        is UserCommand.HandleError -> transition(state).event(UserEvent.NotifyError("Error: ${command.throwable.message}"))
     }
 }
 
+class UserFeature(reducer: UseReducer) : Feature<UserState, UserCommand, UserEvent> by Feature(
+    initialState = UserState(),
+    scope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
+    reducer = reducer,
+    initialCommands = UserCommand.LoadUsers
+)
+
 @Composable
-fun UserScreen(feature: Feature<UserState, UserCommand, UserEvent>) {
+fun UserScreen(feature: UserFeature) {
     val state by feature.state.collectAsState()
 
     LaunchedEffect(Unit) {
-        feature.execute(UserCommand.LoadUsers)
-
         feature.events.collect { event ->
             when (event) {
                 is UserEvent.NotifyError -> {

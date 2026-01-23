@@ -1,10 +1,12 @@
 package io.github.numq.reduceandconquer.example.di
 
-import io.github.numq.reduceandconquer.example.daily.*
+import io.github.numq.reduceandconquer.example.daily.DailyFeature
+import io.github.numq.reduceandconquer.example.daily.DailyReducer
+import io.github.numq.reduceandconquer.example.daily.GetDailyPokemon
+import io.github.numq.reduceandconquer.example.daily.GetMaxAttributeValue
 import io.github.numq.reduceandconquer.example.file.FileProvider
 import io.github.numq.reduceandconquer.example.navigation.NavigationFeature
 import io.github.numq.reduceandconquer.example.navigation.NavigationReducer
-import io.github.numq.reduceandconquer.example.navigation.NavigationState
 import io.github.numq.reduceandconquer.example.pokedex.GetPokedex
 import io.github.numq.reduceandconquer.example.pokedex.PokedexRepository
 import io.github.numq.reduceandconquer.example.pokedex.filter.ResetFilter
@@ -12,15 +14,10 @@ import io.github.numq.reduceandconquer.example.pokedex.filter.ResetFilters
 import io.github.numq.reduceandconquer.example.pokedex.filter.UpdateFilter
 import io.github.numq.reduceandconquer.example.pokedex.presentation.PokedexFeature
 import io.github.numq.reduceandconquer.example.pokedex.presentation.PokedexReducer
-import io.github.numq.reduceandconquer.example.pokedex.presentation.PokedexState
 import io.github.numq.reduceandconquer.example.pokedex.presentation.filter.FilterReducer
 import io.github.numq.reduceandconquer.example.pokedex.presentation.sort.SortReducer
 import io.github.numq.reduceandconquer.example.pokedex.sort.ChangeSort
 import io.github.numq.reduceandconquer.example.pokemon.PokemonService
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.serialization.json.Json
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -37,32 +34,18 @@ private val pokemon = module {
 
 private val navigation = module {
     single { NavigationReducer() }
-    single {
-        NavigationFeature(
-            initialState = NavigationState.Daily,
-            scope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
-            reducer = get()
-        )
-    } onClose { it?.close() }
+    single { NavigationFeature(reducer = get()) } onClose { it?.close() }
 }
 
-@OptIn(DelicateCoroutinesApi::class)
 private val daily = module {
     single { GetDailyPokemon(get()) }
     single { GetMaxAttributeValue(get()) }
     single { DailyReducer(get()) }
-    single {
-        DailyFeature(
-            initialState = DailyState(), scope = CoroutineScope(Dispatchers.Default + SupervisorJob()), reducer = get()
-        )
-    } onClose { it?.close() }
+    single { DailyFeature(reducer = get()) } onClose { it?.close() }
 }
 
-@OptIn(DelicateCoroutinesApi::class)
 private val pokedex = module {
-    single { PokedexRepository.Implementation(service = get()) } bind PokedexRepository::class onClose {
-        (it as? PokedexRepository.Implementation)?.close()
-    }
+    single { PokedexRepository.Implementation(service = get()) } bind PokedexRepository::class onClose { it?.close() }
     single { GetPokedex(get()) }
     single { ResetFilter(get()) }
     single { ResetFilters(get()) }
@@ -71,13 +54,7 @@ private val pokedex = module {
     single { FilterReducer(get(), get(), get()) }
     single { PokedexReducer(get(), get(), get()) }
     single { SortReducer(get()) }
-    single {
-        PokedexFeature(
-            initialState = PokedexState(),
-            scope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
-            reducer = PokedexReducer(get(), get(), get()),
-        )
-    } onClose { it?.close() }
+    single { PokedexFeature(reducer = PokedexReducer(get(), get(), get())) } onClose { it?.close() }
 }
 
 internal val appModule = listOf(application, pokemon, navigation, daily, pokedex)

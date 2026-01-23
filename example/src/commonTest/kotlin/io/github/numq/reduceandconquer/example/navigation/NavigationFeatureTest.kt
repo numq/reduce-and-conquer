@@ -1,5 +1,6 @@
 package io.github.numq.reduceandconquer.example.navigation
 
+import io.github.numq.reduceandconquer.example.feature.Feature
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.*
@@ -14,14 +15,12 @@ class NavigationFeatureTest {
 
     private val testScope = TestScope(testDispatcher)
 
-    private lateinit var feature: NavigationFeature
+    private lateinit var feature: Feature<NavigationState, NavigationCommand, Nothing>
 
     @BeforeTest
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        feature = NavigationFeature(
-            initialState = NavigationState.Daily, scope = testScope, reducer = NavigationReducer()
-        )
+        feature = Feature(initialState = NavigationState.Daily, scope = testScope, reducer = NavigationReducer())
     }
 
     @AfterTest

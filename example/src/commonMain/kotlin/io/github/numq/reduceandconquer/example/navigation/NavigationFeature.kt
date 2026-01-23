@@ -1,10 +1,14 @@
 package io.github.numq.reduceandconquer.example.navigation
 
-import io.github.numq.reduceandconquer.example.feature.BaseFeature
+import io.github.numq.reduceandconquer.example.feature.Feature
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
 internal class NavigationFeature(
-    initialState: NavigationState, scope: CoroutineScope, reducer: NavigationReducer
-) : BaseFeature<NavigationState, NavigationCommand, Nothing>(
-    initialState = initialState, scope = scope, reducer = reducer
+    reducer: NavigationReducer
+) : Feature<NavigationState, NavigationCommand, Nothing> by Feature(
+    initialState = NavigationState.Daily,
+    scope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
+    reducer = reducer
 )

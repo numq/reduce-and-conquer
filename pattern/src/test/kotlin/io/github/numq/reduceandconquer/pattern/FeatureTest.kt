@@ -21,9 +21,7 @@ class FeatureTest {
     @BeforeTest
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        feature = object : BaseFeature<TestState, TestCommand, TestEvent>(
-            initialState = TestState(0), scope = testScope, reducer = TestReducer()
-        ) {}
+        feature = Feature(initialState = TestState(0), scope = testScope, reducer = TestReducer())
     }
 
     @AfterTest

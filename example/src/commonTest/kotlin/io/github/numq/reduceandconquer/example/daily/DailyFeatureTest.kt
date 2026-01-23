@@ -1,6 +1,7 @@
 package io.github.numq.reduceandconquer.example.daily
 
 import io.github.numq.reduceandconquer.example.card.FlippableCard
+import io.github.numq.reduceandconquer.example.feature.Feature
 import io.github.numq.reduceandconquer.example.pokedex.GetPokedex
 import io.github.numq.reduceandconquer.example.pokedex.Pokedex
 import io.github.numq.reduceandconquer.example.pokedex.PokedexRepository
@@ -32,7 +33,7 @@ class DailyFeatureTest {
     private lateinit var testScope: TestScope
     private val repository = mockk<PokedexRepository>()
     private lateinit var getPokedex: GetPokedex
-    private lateinit var feature: DailyFeature
+    private lateinit var feature: Feature<DailyState, DailyCommand, DailyEvent>
 
     @BeforeTest
     fun setUp() {
@@ -42,7 +43,7 @@ class DailyFeatureTest {
 
         getPokedex = GetPokedex(repository)
 
-        feature = DailyFeature(
+        feature = Feature(
             initialState = DailyState(), scope = testScope, reducer = DailyReducer(getPokedex = getPokedex)
         )
     }

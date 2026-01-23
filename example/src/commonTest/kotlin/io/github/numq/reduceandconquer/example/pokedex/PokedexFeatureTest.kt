@@ -1,5 +1,6 @@
 package io.github.numq.reduceandconquer.example.pokedex
 
+import io.github.numq.reduceandconquer.example.feature.Feature
 import io.github.numq.reduceandconquer.example.pokedex.filter.PokedexFilter
 import io.github.numq.reduceandconquer.example.pokedex.filter.ResetFilter
 import io.github.numq.reduceandconquer.example.pokedex.filter.ResetFilters
@@ -33,7 +34,7 @@ class PokedexFeatureTest {
     private val testDispatcher = StandardTestDispatcher()
     private val testScope = TestScope(testDispatcher)
 
-    private lateinit var feature: PokedexFeature
+    private lateinit var feature: Feature<PokedexState, PokedexCommand, PokedexEvent>
 
     @BeforeTest
     fun setUp() {
@@ -51,9 +52,7 @@ class PokedexFeatureTest {
             getPokedex = getPokedex, filterReducer = filterReducer, sortReducer = sortReducer
         )
 
-        feature = PokedexFeature(
-            initialState = PokedexState(), scope = testScope, reducer = reducer
-        )
+        feature = Feature(initialState = PokedexState(), scope = testScope, reducer = reducer)
     }
 
     @AfterTest

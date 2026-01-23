@@ -16,7 +16,8 @@ import kotlin.random.Random
 
 private typealias FilterCommand = (Map<PokedexFilter.Criteria, PokedexFilter>) -> Map<PokedexFilter.Criteria, PokedexFilter>
 
-interface PokedexRepository {
+@OptIn(ExperimentalStdlibApi::class)
+interface PokedexRepository : AutoCloseable {
     val pokedex: StateFlow<Pokedex>
 
     suspend fun updateFilter(filter: PokedexFilter): Result<Unit>
@@ -27,10 +28,9 @@ interface PokedexRepository {
 
     suspend fun changeSort(sort: PokedexSort): Result<Unit>
 
-    @OptIn(ExperimentalStdlibApi::class)
     class Implementation(
         service: PokemonService, dispatcher: CoroutineContext = Dispatchers.Default
-    ) : PokedexRepository, AutoCloseable {
+    ) : PokedexRepository {
         private val scope = CoroutineScope(dispatcher + SupervisorJob())
 
         private val _pokemons = service.pokemons.map { pokemonJsons ->
