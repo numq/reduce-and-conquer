@@ -623,7 +623,7 @@ class SomeFeature(reducer: SomeReducer) : Feature<SomeState, SomeCommand, SomeEv
     initialState = SomeState(),
     scope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
     reducer = reducer,
-    initialCommands = SomeCommand.LoadInitialData
+    SomeCommand.LoadInitialData
 )
 ```
 
@@ -634,7 +634,7 @@ val feature = Feature<SomeState, SomeCommand, SomeEvent>(
     initialState = SomeState(),
     scope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
     reducer = SomeReducer(),
-    initialCommands = SomeCommand.LoadInitialData
+    SomeCommand.LoadInitialData
 )
 ```
 
@@ -1039,7 +1039,7 @@ class UserFeature(reducer: UseReducer) : Feature<UserState, UserCommand, UserEve
     initialState = UserState(),
     scope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
     reducer = reducer,
-    initialCommands = UserCommand.LoadUsers
+    UserCommand.LoadUsers
 )
 
 @Composable
