@@ -13,7 +13,7 @@ internal class DailyReducer(private val getPokedex: GetPokedex) : Reducer<DailyS
             )
         )
 
-        is DailyCommand.Initialize -> transition(state).effects(
+        is DailyCommand.Initialize -> transition(state).effect(
             action(key = command.key, block = {
                 getPokedex.execute(Unit).fold(
                     onSuccess = DailyCommand::InitializeSuccess, onFailure = DailyCommand::HandleThrowable
