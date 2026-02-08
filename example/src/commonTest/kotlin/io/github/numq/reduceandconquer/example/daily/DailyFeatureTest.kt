@@ -4,7 +4,7 @@ import io.github.numq.reduceandconquer.example.card.FlippableCard
 import io.github.numq.reduceandconquer.example.feature.Feature
 import io.github.numq.reduceandconquer.example.pokedex.GetPokedex
 import io.github.numq.reduceandconquer.example.pokedex.Pokedex
-import io.github.numq.reduceandconquer.example.pokedex.PokedexRepository
+import io.github.numq.reduceandconquer.example.pokedex.PokedexService
 import io.github.numq.reduceandconquer.example.pokemon.PokemonProvider
 import io.github.numq.reduceandconquer.example.pokemon.toPokemon
 import io.mockk.clearAllMocks
@@ -31,7 +31,7 @@ class DailyFeatureTest {
 
     private lateinit var testDispatcher: TestDispatcher
     private lateinit var testScope: TestScope
-    private val repository = mockk<PokedexRepository>()
+    private val service = mockk<PokedexService>()
     private lateinit var getPokedex: GetPokedex
     private lateinit var feature: Feature<DailyState, DailyCommand, DailyEvent>
 
@@ -41,7 +41,7 @@ class DailyFeatureTest {
         testScope = TestScope(testDispatcher)
         Dispatchers.setMain(testDispatcher)
 
-        getPokedex = GetPokedex(repository)
+        getPokedex = GetPokedex(service)
 
         feature = Feature(
             initialState = DailyState(), scope = testScope, reducer = DailyReducer(getPokedex = getPokedex)
@@ -58,12 +58,12 @@ class DailyFeatureTest {
     @Test
     fun `initialization success updates state with pokedex data`() = runTest {
         val pokedex = Pokedex(dailyPokemon = POKEMON, maxAttributeValue = MAX_ATTRIBUTE_VALUE)
-        every { repository.pokedex } returns MutableStateFlow(pokedex)
+        every { service.pokedex } returns MutableStateFlow(pokedex)
 
         feature.execute(DailyCommand.Initialize)
         advanceUntilIdle()
 
-        coVerify(exactly = 1) { repository.pokedex }
+        coVerify(exactly = 1) { service.pokedex }
 
         val state = feature.state.value
 
@@ -75,7 +75,7 @@ class DailyFeatureTest {
     fun `initialization failure emits error event`() = runTest {
         val errorMessage = "Network Error"
 
-        every { repository.pokedex } throws Exception(errorMessage)
+        every { service.pokedex } throws Exception(errorMessage)
 
         val events = mutableListOf<DailyEvent.Error>()
 

@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.serialization.json.Json
 
-interface PokemonService {
+interface PokemonDataSource {
     val pokemons: Flow<List<PokemonJson>>
 
     suspend fun getPokemonImagePath(id: Int): Result<String>
@@ -15,7 +15,7 @@ interface PokemonService {
     class Implementation(
         private val fileProvider: FileProvider,
         private val json: Json,
-    ) : PokemonService {
+    ) : PokemonDataSource {
         companion object {
             const val POKEDEX_JSON_PATH = "files/pokedex.json"
 

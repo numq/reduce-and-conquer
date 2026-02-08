@@ -8,7 +8,7 @@ import io.github.numq.reduceandconquer.example.file.FileProvider
 import io.github.numq.reduceandconquer.example.navigation.NavigationFeature
 import io.github.numq.reduceandconquer.example.navigation.NavigationReducer
 import io.github.numq.reduceandconquer.example.pokedex.GetPokedex
-import io.github.numq.reduceandconquer.example.pokedex.PokedexRepository
+import io.github.numq.reduceandconquer.example.pokedex.PokedexService
 import io.github.numq.reduceandconquer.example.pokedex.filter.ResetFilter
 import io.github.numq.reduceandconquer.example.pokedex.filter.ResetFilters
 import io.github.numq.reduceandconquer.example.pokedex.filter.UpdateFilter
@@ -17,7 +17,7 @@ import io.github.numq.reduceandconquer.example.pokedex.presentation.PokedexReduc
 import io.github.numq.reduceandconquer.example.pokedex.presentation.filter.FilterReducer
 import io.github.numq.reduceandconquer.example.pokedex.presentation.sort.SortReducer
 import io.github.numq.reduceandconquer.example.pokedex.sort.ChangeSort
-import io.github.numq.reduceandconquer.example.pokemon.PokemonService
+import io.github.numq.reduceandconquer.example.pokemon.PokemonDataSource
 import kotlinx.serialization.json.Json
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -29,7 +29,7 @@ private val application = module {
 }
 
 private val pokemon = module {
-    single { PokemonService.Implementation(get(), get()) } bind PokemonService::class
+    single { PokemonDataSource.Implementation(get(), get()) } bind PokemonDataSource::class
 }
 
 private val navigation = module {
@@ -45,7 +45,7 @@ private val daily = module {
 }
 
 private val pokedex = module {
-    single { PokedexRepository.Implementation(service = get()) } bind PokedexRepository::class onClose { it?.close() }
+    single { PokedexService.Implementation(dataSource = get()) } bind PokedexService::class onClose { it?.close() }
     single { GetPokedex(get()) }
     single { ResetFilter(get()) }
     single { ResetFilters(get()) }

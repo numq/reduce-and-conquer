@@ -2,8 +2,8 @@ package io.github.numq.reduceandconquer.example.pokedex
 
 import io.github.numq.reduceandconquer.example.pokedex.filter.PokedexFilter
 import io.github.numq.reduceandconquer.example.pokemon.Pokemon
+import io.github.numq.reduceandconquer.example.pokemon.PokemonDataSource
 import io.github.numq.reduceandconquer.example.pokemon.PokemonJson
-import io.github.numq.reduceandconquer.example.pokemon.PokemonService
 import io.github.numq.reduceandconquer.example.pokemon.toJson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -14,10 +14,10 @@ import kotlinx.coroutines.test.*
 import kotlin.test.*
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class PokedexRepositoryTest {
+class PokedexServiceTest {
     private val testDispatcher = StandardTestDispatcher()
 
-    private lateinit var repository: PokedexRepository.Implementation
+    private lateinit var service: PokedexService.Implementation
 
     private val pokemons = listOf(
         Pokemon(
@@ -35,7 +35,7 @@ class PokedexRepositoryTest {
         )
     )
 
-    private class PokemonServiceStub(list: List<PokemonJson>) : PokemonService {
+    private class PokemonDataSourceStub(list: List<PokemonJson>) : PokemonDataSource {
         override val pokemons = flowOf(list)
 
         override suspend fun getPokemonImagePath(id: Int) = Result.success("")
@@ -45,14 +45,14 @@ class PokedexRepositoryTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
 
-        val stub = PokemonServiceStub(pokemons.map(Pokemon::toJson))
+        val stub = PokemonDataSourceStub(pokemons.map(Pokemon::toJson))
 
-        repository = PokedexRepository.Implementation(stub, testDispatcher)
+        service = PokedexService.Implementation(stub, testDispatcher)
     }
 
     @AfterTest
     fun tearDown() {
-        repository.close()
+        service.close()
         Dispatchers.resetMain()
     }
 
@@ -67,10 +67,10 @@ class PokedexRepositoryTest {
 
     @Test
     fun `initialization calculates correct ranges`() = runTest(testDispatcher) {
-        val job = backgroundScope.launch { repository.pokedex.collect() }
+        val job = backgroundScope.launch { service.pokedex.collect() }
         advanceUntilIdle()
 
-        val pokedex = repository.pokedex.value
+        val pokedex = service.pokedex.value
         assertEquals(100..200, pokedex.attributeRanges[Pokemon.Attribute.Kind.HP])
         assertNotNull(pokedex.dailyPokemon)
 
@@ -79,13 +79,13 @@ class PokedexRepositoryTest {
 
     @Test
     fun `updateFilter correctly filters pokemon list`() = runTest(testDispatcher) {
-        val job = backgroundScope.launch { repository.pokedex.collect() }
+        val job = backgroundScope.launch { service.pokedex.collect() }
         advanceUntilIdle()
 
-        repository.updateFilter(PokedexFilter.Name(default = "P1"))
+        service.updateFilter(PokedexFilter.Name(default = "P1"))
         advanceUntilIdle()
 
-        val filteredList = repository.pokedex.value.pokemons
+        val filteredList = service.pokedex.value.pokemons
         assertEquals(1, filteredList.size)
         assertEquals(1, filteredList.first().id)
 
@@ -94,21 +94,21 @@ class PokedexRepositoryTest {
 
     @Test
     fun `resetFilters restores initial state`() = runTest(testDispatcher) {
-        val job = launch { repository.pokedex.collect() }
+        val job = launch { service.pokedex.collect() }
         advanceUntilIdle()
 
-        val nameFilter = repository.pokedex.value.filters[PokedexFilter.Criteria.NAME] as PokedexFilter.Name
+        val nameFilter = service.pokedex.value.filters[PokedexFilter.Criteria.NAME] as PokedexFilter.Name
         val modifiedFilter = nameFilter.copy(modified = "NonExistent")
 
-        repository.updateFilter(modifiedFilter)
+        service.updateFilter(modifiedFilter)
         advanceUntilIdle()
 
-        assertEquals(0, repository.pokedex.value.pokemons.size)
+        assertEquals(0, service.pokedex.value.pokemons.size)
 
-        repository.resetFilters()
+        service.resetFilters()
         advanceUntilIdle()
 
-        assertEquals(2, repository.pokedex.value.pokemons.size)
+        assertEquals(2, service.pokedex.value.pokemons.size)
 
         job.cancel()
     }

@@ -8,7 +8,7 @@ import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class PokemonServiceTest {
+class PokemonDataSourceTest {
     private val json = Json { ignoreUnknownKeys = true }
 
     @Test
@@ -21,9 +21,9 @@ class PokemonServiceTest {
             override suspend fun open(path: String) = Result.success(bytes)
         }
 
-        val serviceWithStub = PokemonService.Implementation(fileProvider = stubFileProvider, json = json)
+        val dataSourceWithStub = PokemonDataSource.Implementation(fileProvider = stubFileProvider, json = json)
 
-        val result = serviceWithStub.pokemons.lastOrNull()
+        val result = dataSourceWithStub.pokemons.lastOrNull()
 
         assertEquals(pokemons.size, result?.size)
         assertEquals(pokemons.first().id, result?.first()?.id)

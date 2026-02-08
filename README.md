@@ -614,7 +614,10 @@ An interface that takes three type parameters: `State`, `Command`, and `Event`.
 
 #### Creating a Feature:
 
-- `invoke(initialState: State, scope: CoroutineScope, reducer: Reducer<State, Command, Event>, vararg initialCommands: Command)`: Returns a standard implementation of the Feature.
+-
+
+`invoke(initialState: State, scope: CoroutineScope, reducer: Reducer<State, Command, Event>, vararg initialCommands: Command)`:
+Returns a standard implementation of the Feature.
 
 ##### Delegation (Recommended)
 
@@ -703,20 +706,24 @@ The effect system provides structured side effect management:
 ```kotlin
 class SomeReducer : Reducer<SomeState, SomeCommand, SomeEvent> {
     override fun reduce(state: SomeState, command: SomeCommand) = when (command) {
+        is SomeCommand.HandleError -> transition(state).event(SomeEvent.NotifyError("Error: ${command.throwable.message}"))
+        
         is SomeCommand.LoadData -> transition(state).effect(
             stream(
                 key = "data_stream",
-                flow = dataRepository.observeData(),
+                flow = observeUsers.execute(input = Unit).map(SomeCommand::UpdateData),
                 fallback = { throwable -> SomeCommand.HandleError(throwable) }
             )
         )
+        
+        is SomeCommand.UpdateData -> transition(state.copy(data = command.data)).event(SomeEvent.ShowSuccess("Data updated"))
 
         is SomeCommand.PerformAction -> transition(state).effect(
             action(
                 key = "deferred_action",
                 block = {
                     val result = performComplexCalculation()
-                    
+
                     SomeCommand.OnResult(result)
                 },
                 fallback = { throwable -> SomeCommand.HandleError(throwable) }
@@ -928,31 +935,27 @@ graph LR
     end
 
     subgraph "Domain Layer"
-        UseCase["Use Case"] --> Repository["Repository"]
         UseCase["Use Case"] --> Entity["Entity"]
+        UseCase["Use Case"] --> Service["Service"]
     end
 
     subgraph "Infrastructure Layer"
-        direction TB
-        Dao["DAO"] --> Database["Database"]
-        Service["Service"] --> FileSystem["File System"]
-        Service["Service"] --> NetworkClient["Network Client"]
+        Service["Service"] --> Repository["Repository"]
+        Repository["Repository"] --> External["Network / FileSystem / DB"]
     end
 
     Reducer --> UseCase
-    Repository --> Dao
-    Repository --> Service
 ```
 
 **Clean Architecture** can be represented as follows:
 
 ```kotlin
 View(
-    Feature(           // Manages Events (notifications) and Effects (side operations)
-        Reducer(       // Produces State, Events, and Effects
-            UseCase(
-                Repository(
-                    Service
+    Feature(                    // Manages Events (notifications) and Effects (side operations)
+        Reducer(                // Produces State, Events, and Effects
+            UseCase(            // Orchestrates specific business scenarios
+                Service(        // Public API and subsystem-specific logic
+                    Repository  // Encapsulates data persistence
                 )
             )
         )
@@ -997,8 +1000,12 @@ manages the lifecycle of flow collections.
 ```kotlin
 data class User(val id: String)
 
-interface UserRepository {
-    fun observeUsers(): Flow<List<User>>
+interface UserService {
+    suspend fun observeUsers(): Result<Flow<List<User>>>
+}
+
+class ObserveUsers(private val service: UserService) : UseCase<Unit, Flow<List<User>>> {
+    override suspend fun execute(input: Unit) = service.observeUsers()
 }
 
 data class UserState(val users: List<User> = emptyList())
@@ -1018,13 +1025,13 @@ sealed interface UserEvent {
 }
 
 class UserReducer(
-    private val userRepository: UserRepository,
+    private val observeUsers: ObserveUsers,
 ) : Reducer<UserState, UserCommand, UserEvent> {
     override fun reduce(state: UserState, command: UserCommand) = when (command) {
         UserCommand.LoadUsers -> transition(state).effect(
             stream(
                 key = "users_flow",
-                flow = userRepository.observeUsers().map(UserCommand::UpdateUsers),
+                flow = observeUsers.execute(input = Unit).map(UserCommand::UpdateUsers),
                 fallback = { throwable -> UserCommand.HandleError(throwable) }
             )
         )

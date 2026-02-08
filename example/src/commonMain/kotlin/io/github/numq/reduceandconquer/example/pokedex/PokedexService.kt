@@ -3,7 +3,7 @@ package io.github.numq.reduceandconquer.example.pokedex
 import io.github.numq.reduceandconquer.example.pokedex.filter.PokedexFilter
 import io.github.numq.reduceandconquer.example.pokedex.sort.PokedexSort
 import io.github.numq.reduceandconquer.example.pokemon.Pokemon
-import io.github.numq.reduceandconquer.example.pokemon.PokemonService
+import io.github.numq.reduceandconquer.example.pokemon.PokemonDataSource
 import io.github.numq.reduceandconquer.example.pokemon.toPokemon
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -17,7 +17,7 @@ import kotlin.random.Random
 private typealias FilterCommand = (Map<PokedexFilter.Criteria, PokedexFilter>) -> Map<PokedexFilter.Criteria, PokedexFilter>
 
 @OptIn(ExperimentalStdlibApi::class)
-interface PokedexRepository : AutoCloseable {
+interface PokedexService : AutoCloseable {
     val pokedex: StateFlow<Pokedex>
 
     suspend fun updateFilter(filter: PokedexFilter): Result<Unit>
@@ -29,13 +29,13 @@ interface PokedexRepository : AutoCloseable {
     suspend fun changeSort(sort: PokedexSort): Result<Unit>
 
     class Implementation(
-        service: PokemonService, dispatcher: CoroutineContext = Dispatchers.Default
-    ) : PokedexRepository {
+        dataSource: PokemonDataSource, dispatcher: CoroutineContext = Dispatchers.Default
+    ) : PokedexService {
         private val scope = CoroutineScope(dispatcher + SupervisorJob())
 
-        private val _pokemons = service.pokemons.map { pokemonJsons ->
+        private val _pokemons = dataSource.pokemons.map { pokemonJsons ->
             pokemonJsons.map { pokemonJson ->
-                val imagePath = service.getPokemonImagePath(id = pokemonJson.id).getOrNull()
+                val imagePath = dataSource.getPokemonImagePath(id = pokemonJson.id).getOrNull()
 
                 pokemonJson.toPokemon().copy(imagePath = imagePath)
             }

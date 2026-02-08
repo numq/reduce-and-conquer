@@ -30,7 +30,7 @@ class PokedexFeatureTest {
         val POKEMON = PokemonProvider.randomPokemonJson().toPokemon()
     }
 
-    private val repository = mockk<PokedexRepository>()
+    private val service = mockk<PokedexService>()
     private val testDispatcher = StandardTestDispatcher()
     private val testScope = TestScope(testDispatcher)
 
@@ -40,13 +40,13 @@ class PokedexFeatureTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
 
-        val getPokedex = GetPokedex(repository)
+        val getPokedex = GetPokedex(service)
         val filterReducer = FilterReducer(
-            resetFilter = ResetFilter(repository),
-            resetFilters = ResetFilters(repository),
-            updateFilter = UpdateFilter(repository)
+            resetFilter = ResetFilter(service),
+            resetFilters = ResetFilters(service),
+            updateFilter = UpdateFilter(service)
         )
-        val sortReducer = SortReducer(changeSort = ChangeSort(repository))
+        val sortReducer = SortReducer(changeSort = ChangeSort(service))
 
         val reducer = PokedexReducer(
             getPokedex = getPokedex, filterReducer = filterReducer, sortReducer = sortReducer
@@ -73,7 +73,7 @@ class PokedexFeatureTest {
             sort = sort
         )
 
-        every { repository.pokedex } returns MutableStateFlow(mockPokedex)
+        every { service.pokedex } returns MutableStateFlow(mockPokedex)
 
         feature.execute(PokedexCommand.Initialize)
         advanceUntilIdle()
@@ -111,11 +111,11 @@ class PokedexFeatureTest {
     fun `sort pokemons success completes without error`() = runTest {
         val sort = PokedexSort(PokedexSort.Criteria.BASIC_ATTACK, false)
 
-        coEvery { repository.changeSort(any()) } returns Result.success(Unit)
+        coEvery { service.changeSort(any()) } returns Result.success(Unit)
 
         feature.execute(PokedexCommand.Sort.SortPokemons(sort))
         advanceUntilIdle()
 
-        coVerify(exactly = 1) { repository.changeSort(sort) }
+        coVerify(exactly = 1) { service.changeSort(sort) }
     }
 }
