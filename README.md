@@ -1042,7 +1042,7 @@ class UserReducer(
     }
 }
 
-class UserFeature(reducer: UseReducer) : Feature<UserState, UserCommand, UserEvent> by Feature(
+class UserFeature(reducer: UserReducer) : Feature<UserState, UserCommand, UserEvent> by Feature(
     initialState = UserState(),
     scope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
     reducer = reducer,
