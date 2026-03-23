@@ -6,12 +6,6 @@
 
 [Reduce, Conquer, Repeat: How the “Reduce & Conquer” Architecture Can Improve Your Compose Application](https://medium.com/@numq/reduce-conquer-repeat-how-the-reduce-conquer-architecture-can-improve-your-compose-9fece98a3bb8)
 
-|                                                                  🖤                                                                   |                  Support this project                   |               
-|:-------------------------------------------------------------------------------------------------------------------------------------:|:-------------------------------------------------------:|
-|  <img src="https://raw.githubusercontent.com/ErikThiart/cryptocurrency-icons/master/32/bitcoin.png" alt="Bitcoin (BTC)" width="32"/>  | <code>bc1qs6qq0fkqqhp4whwq8u8zc5egprakvqxewr5pmx</code> | 
-| <img src="https://raw.githubusercontent.com/ErikThiart/cryptocurrency-icons/master/32/ethereum.png" alt="Ethereum (ETH)" width="32"/> | <code>0x3147bEE3179Df0f6a0852044BFe3C59086072e12</code> |
-|  <img src="https://raw.githubusercontent.com/ErikThiart/cryptocurrency-icons/master/32/tether.png" alt="USDT (TRC-20)" width="32"/>   |     <code>TKznmR65yhPt5qmYCML4tNSWFeeUkgYSEV</code>     |
-
 ___
 
 ## Navigation
@@ -707,7 +701,7 @@ The effect system provides structured side effect management:
 class SomeReducer : Reducer<SomeState, SomeCommand, SomeEvent> {
     override fun reduce(state: SomeState, command: SomeCommand) = when (command) {
         is SomeCommand.HandleError -> transition(state).event(SomeEvent.NotifyError("Error: ${command.throwable.message}"))
-        
+
         is SomeCommand.LoadData -> transition(state).effect(
             stream(
                 key = "data_stream",
@@ -715,7 +709,7 @@ class SomeReducer : Reducer<SomeState, SomeCommand, SomeEvent> {
                 fallback = { throwable -> SomeCommand.HandleError(throwable) }
             )
         )
-        
+
         is SomeCommand.UpdateData -> transition(state.copy(data = command.data)).event(SomeEvent.ShowSuccess("Data updated"))
 
         is SomeCommand.PerformAction -> transition(state).effect(
@@ -1184,8 +1178,11 @@ graph TD
 
 ## More examples
 
-- [Haskcore](https://github.com/numq/haskcore) - A modern, lightweight standalone desktop IDE with LSP support, built
+- [haskcore](https://github.com/numq/haskcore) - A modern, lightweight standalone desktop IDE with LSP support, built
   with Kotlin & Compose Desktop for Haskell development
+- [GrokViewer](https://github.com/numq/grok-viewer) - An application for viewing, filtering, and exporting binary data
+  from
+  Grok AI (xAI) archives into human-readable formats
 - [StarsNoMore](https://github.com/numq/StarsNoMore) - An application for getting a summary of statistics and traffic of
   a user's GitHub repositories
 - [Klarity](https://github.com/numq/Klarity) - Jetpack Compose Desktop media player library demonstration (example)
@@ -1194,3 +1191,16 @@ graph TD
   ability to take pictures with a smartphone camera and use them in the ComfyUI workflow
 - [compose-desktop-media-player](https://github.com/numq/compose-desktop-media-player) - Examples of implementing a
   media (audio/video) player for Jetpack Compose Desktop using various libraries
+
+___
+
+<p align="center">
+  <a href="https://numq.github.io/support">
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=112x112&data=https://numq.github.io/support&bgcolor=1a1b26&color=7aa2f7" width="112" height="112" align="center" style="border-radius: 4px;" alt="QR code">
+  </a>
+  <br>
+  <br>
+  <a href="https://numq.github.io/support" style="text-decoration: none;">
+    <code><font color="#bb9af7">numq.github.io/support</font></code>
+  </a>
+</p>
