@@ -51,10 +51,11 @@ internal fun DailyView(feature: DailyFeature) {
         Column(
             modifier = Modifier.fillMaxSize().padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
+            verticalArrangement = Arrangement.spacedBy(space = 8.dp, alignment = Alignment.CenterVertically)
         ) {
             Text(
                 stringResource(Res.string.daily_pokemon_of_the_day),
+                color = MaterialTheme.colors.onBackground,
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center
