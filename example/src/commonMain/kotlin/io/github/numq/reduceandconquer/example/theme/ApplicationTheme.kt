@@ -38,7 +38,7 @@ private val DarkColors = darkColors(
 
 @Composable
 fun ApplicationTheme(
-    darkTheme: Boolean = false,
+    darkTheme: Boolean,
     content: @Composable () -> Unit,
 ) {
     MaterialTheme(
