@@ -47,11 +47,16 @@ ___
     - [Features](#features)
     - [Libraries](#libraries)
 - [More examples](#more-examples)
+- [License](#license)
 
 ## About
 
 **Reduce & Conquer** is a universal architectural pattern with formal mathematical foundations, designed for building
 predictable, testable, and maintainable software systems across any platform or framework.
+
+<p align="center">
+  <img src="./media/diagram.svg" alt="Layers" width="512"/>
+</p>
 
 This repository contains a reference implementation and comprehensive [example](#example-proof-of-concept) demonstrating
 how the pattern integrates with Clean Architecture, using a Pokédex application built with Compose Multiplatform as the
@@ -1178,19 +1183,22 @@ graph TD
 
 ## More examples
 
-- [haskcore](https://github.com/numq/haskcore) - A modern, lightweight standalone desktop IDE with LSP support, built
-  with Kotlin & Compose Desktop for Haskell development
+- [haskcore](https://github.com/numq/haskcore) - A lightweight and standalone Haskell IDE powered by Compose Desktop
 - [GrokViewer](https://github.com/numq/grok-viewer) - An application for viewing, filtering, and exporting binary data
   from
   Grok AI (xAI) archives into human-readable formats
 - [StarsNoMore](https://github.com/numq/StarsNoMore) - An application for getting a summary of statistics and traffic of
   a user's GitHub repositories
-- [Klarity](https://github.com/numq/Klarity) - Jetpack Compose Desktop media player library demonstration (example)
+- [Klarity](https://github.com/numq/Klarity) - Compose Desktop media player library demonstration (example)
   project
 - [camera-capture](https://github.com/numq/camera-capture) - Part of a project (mobile application) that provides the
   ability to take pictures with a smartphone camera and use them in the ComfyUI workflow
 - [compose-desktop-media-player](https://github.com/numq/compose-desktop-media-player) - Examples of implementing a
-  media (audio/video) player for Jetpack Compose Desktop using various libraries
+  media (audio/video) player for Compose Desktop using various libraries
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ___
 

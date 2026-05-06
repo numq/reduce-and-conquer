@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
+  <title>reduce-and-conquer-layers</title>
+  <g>
+    <path d="M512,1011.5A499.632,499.632,0,0,1,317.57227,51.75293,499.62949,499.62949,0,0,1,706.42773,972.24707,496.37733,496.37733,0,0,1,512,1011.5Z" transform="translate(-12 -12)" style="fill: #c8e6c9"/>
+    <path d="M512,13A499.13187,499.13187,0,0,1,706.233,971.7865,499.12944,499.12944,0,0,1,317.767,52.2135,495.8751,495.8751,0,0,1,512,13m0-1C235.85762,12,12,235.85762,12,512s223.85762,500,500,500,500-223.85761,500-500S788.1424,12,512,12Z" transform="translate(-12 -12)"/>
+  </g>
+  <text transform="translate(467.59766 946.66406)" style="font-size: 30px;font-family: Roboto-Regular, Roboto">View</text>
+  <g>
+    <path d="M512,886.5a373.32329,373.32329,0,1,1,145.77246-29.42969A372.14948,372.14948,0,0,1,512,886.5Z" transform="translate(-12 -12)" style="fill: #b3e5fc"/>
+    <path d="M512,138a372.82631,372.82631,0,1,1-145.57739,29.3904A371.6563,371.6563,0,0,1,512,138m0-1c-207.10681,0-375,167.89319-375,375S304.89319,887,512,887,887,719.10681,887,512,719.10681,137,512,137Z" transform="translate(-12 -12)"/>
+  </g>
+  <text transform="translate(450.09961 821.5752)" style="font-size: 30px;font-family: Roboto-Regular, Roboto"><tspan style="letter-spacing: -0.01025390625em">F</tspan><tspan x="16.27441" y="0">eatu</tspan><tspan x="74.82422" y="0" style="letter-spacing: -0.00927734375em">r</tspan><tspan x="84.69727" y="0">e</tspan></text>
+  <g>
+    <path d="M512,761.5a249.501,249.501,0,1,1,176.42285-73.07715A247.86467,247.86467,0,0,1,512,761.5Z" transform="translate(-12 -12)" style="fill: #fff9c4"/>
+    <path d="M512,263a248.218,248.218,0,1,1-96.92172,19.56726A247.44064,247.44064,0,0,1,512,263m0-1c-138.0712,0-250,111.9288-250,250S373.9288,762,512,762,762,650.07123,762,512,650.07123,262,512,262Z" transform="translate(-12 -12)"/>
+  </g>
+  <text transform="translate(445.59082 696.57715)" style="font-size: 30px;font-family: Roboto-Regular, Roboto">Reducer</text>
+  <g>
+    <path d="M512,636.5A124.5,124.5,0,1,1,636.5,512,124.64116,124.64116,0,0,1,512,636.5Z" transform="translate(-12 -12)" style="fill: #ffe0b2"/>
+    <path d="M512,388a124,124,0,1,1-87.68124,36.31876A123.18819,123.18819,0,0,1,512,388m0-1A125,125,0,1,0,637,512,125,125,0,0,0,512,387Z" transform="translate(-12 -12)"/>
+  </g>
+  <text transform="translate(441 509)" style="font-size: 30px;font-family: Roboto-Regular, Roboto">UseCase</text>
+</svg>
