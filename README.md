@@ -50,8 +50,9 @@ ___
 
 ## About
 
-**Reduce & Conquer** is a universal architectural pattern with formal mathematical foundations, designed for building
-predictable, testable, and maintainable software systems across any platform or framework.
+**Reduce & Conquer** is a state management architecture for Kotlin Multiplatform and Compose Multiplatform. A deterministic,
+boilerplate-free alternative to MVI and TEA patterns, it provides strict unidirectional data flow (UDF) and robust
+side-effect isolation in commonMain — purpose-built for scalable multiplatform app architecture.
 
 <p align="center">
   <img src="./media/diagram.svg" alt="Layers" width="512"/>
