@@ -1,7 +1,6 @@
 # Reduce & Conquer
 
 [![medium](https://img.shields.io/badge/Medium-12100E?style=for-the-badge&logo=medium&logoColor=white)](https://medium.com/@numq/stop-fighting-your-state-reduce-and-conquer-it-da75158cde54)
-[![dev](https://img.shields.io/badge/dev-12100E?style=for-the-badge&logo=dev.to&logoColor=white)](https://dev.to/numq/stop-fighting-your-state-reduce-and-conquer-it-1ijf)
 
 *Reduce. Conquer. Repeat.*
 
