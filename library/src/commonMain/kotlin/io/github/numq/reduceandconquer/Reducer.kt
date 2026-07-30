@@ -1,4 +1,4 @@
-package io.github.numq.reduceandconquer.library
+package io.github.numq.reduceandconquer
 
 import kotlinx.coroutines.flow.Flow
 

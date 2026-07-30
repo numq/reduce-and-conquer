@@ -8,10 +8,10 @@ import io.github.numq.reduceandconquer.example.pokedex.presentation.PokedexComma
 import io.github.numq.reduceandconquer.example.pokedex.presentation.PokedexEvent
 import io.github.numq.reduceandconquer.example.pokedex.presentation.PokedexInteractionMode
 import io.github.numq.reduceandconquer.example.pokedex.presentation.PokedexState
-import io.github.numq.reduceandconquer.library.Reducer
-import io.github.numq.reduceandconquer.library.action
-import io.github.numq.reduceandconquer.library.effect
-import io.github.numq.reduceandconquer.library.event
+import io.github.numq.reduceandconquer.Reducer
+import io.github.numq.reduceandconquer.action
+import io.github.numq.reduceandconquer.effect
+import io.github.numq.reduceandconquer.event
 
 internal class FilterReducer(
     private val resetFilter: ResetFilter,

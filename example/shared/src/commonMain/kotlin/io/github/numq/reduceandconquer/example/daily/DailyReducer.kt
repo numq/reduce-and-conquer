@@ -1,8 +1,12 @@
 package io.github.numq.reduceandconquer.example.daily
 
+import io.github.numq.reduceandconquer.Reducer
+import io.github.numq.reduceandconquer.action
+import io.github.numq.reduceandconquer.effect
+import io.github.numq.reduceandconquer.event
 import io.github.numq.reduceandconquer.example.card.FlippableCard
 import io.github.numq.reduceandconquer.example.pokedex.GetPokedex
-import io.github.numq.reduceandconquer.library.*
+import io.github.numq.reduceandconquer.stream
 import kotlinx.coroutines.flow.map
 
 internal class DailyReducer(private val getPokedex: GetPokedex) : Reducer<DailyState, DailyCommand, DailyEvent> {

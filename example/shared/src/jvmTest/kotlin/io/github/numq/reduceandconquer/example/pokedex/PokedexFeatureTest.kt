@@ -12,7 +12,7 @@ import io.github.numq.reduceandconquer.example.pokedex.sort.PokedexSort
 import io.github.numq.reduceandconquer.example.pokemon.Pokemon
 import io.github.numq.reduceandconquer.example.pokemon.PokemonProvider
 import io.github.numq.reduceandconquer.example.pokemon.toPokemon
-import io.github.numq.reduceandconquer.library.Feature
+import io.github.numq.reduceandconquer.Feature
 import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi

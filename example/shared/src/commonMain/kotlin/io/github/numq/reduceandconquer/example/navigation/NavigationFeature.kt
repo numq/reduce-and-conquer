@@ -1,6 +1,6 @@
 package io.github.numq.reduceandconquer.example.navigation
 
-import io.github.numq.reduceandconquer.library.Feature
+import io.github.numq.reduceandconquer.Feature
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

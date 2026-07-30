@@ -1,5 +1,6 @@
 package io.github.numq.reduceandconquer.library
 
+import io.github.numq.reduceandconquer.Feature
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flow

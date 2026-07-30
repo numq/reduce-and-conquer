@@ -6,7 +6,7 @@ import io.github.numq.reduceandconquer.example.pokedex.Pokedex
 import io.github.numq.reduceandconquer.example.pokedex.PokedexService
 import io.github.numq.reduceandconquer.example.pokemon.PokemonProvider
 import io.github.numq.reduceandconquer.example.pokemon.toPokemon
-import io.github.numq.reduceandconquer.library.Feature
+import io.github.numq.reduceandconquer.Feature
 import io.mockk.clearAllMocks
 import io.mockk.coVerify
 import io.mockk.every

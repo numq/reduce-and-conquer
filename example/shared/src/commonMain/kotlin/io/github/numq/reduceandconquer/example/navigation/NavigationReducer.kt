@@ -1,6 +1,6 @@
 package io.github.numq.reduceandconquer.example.navigation
 
-import io.github.numq.reduceandconquer.library.Reducer
+import io.github.numq.reduceandconquer.Reducer
 
 internal class NavigationReducer : Reducer<NavigationState, NavigationCommand, Nothing> {
     override fun reduce(state: NavigationState, command: NavigationCommand) = when (command) {

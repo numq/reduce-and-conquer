@@ -1,4 +1,4 @@
-package io.github.numq.reduceandconquer.library
+package io.github.numq.reduceandconquer
 
 data class Transition<out State, out Event>(val state: State, val events: List<Event>, val effects: List<Effect>)
 
