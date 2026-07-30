@@ -9,7 +9,6 @@ ___
 ## Navigation
 
 - [About](#about)
-- [Changelog](#changelog)
 - [Core Principles](#core-principles)
 - [Mathematical Core](#mathematical-core)
 - [Universal Architecture Components](#universal-architecture-components)
@@ -60,29 +59,6 @@ side-effect isolation in commonMain — purpose-built for scalable multiplatform
 This repository contains a reference implementation and comprehensive [example](#example-proof-of-concept) demonstrating
 how the pattern integrates with Clean Architecture, using a Pokédex application built with Compose Multiplatform as the
 demonstration vehicle.
-
-## Changelog
-
-### [3.0.0](https://github.com/numq/reduce-and-conquer/releases/tag/3.0.0)
-
-- **Major simplification and optimization**: Removed `Factory`, `Strategy`, `Processor`, `Metrics`.
-- **Dual-system architecture**: Separated concerns between `Event` (notifications) and `Effect` (side operations).
-- **Structured side effect management**: Effects now handle flow collection, deferred execution, and cancellation.
-- **Simplified core**: `ReducerFeature` uses a channel for commands and a `scan` to manage state transitions.
-- **Enhanced type safety**: Clear separation between events and operational effects.
-
-### [2.0.0](https://github.com/numq/reduce-and-conquer/releases/tag/2.0.0)
-
-- Command processing strategies: `Immediate`, `Channel`, `Parallel`
-- Enhanced events with lifecycle management
-- Built-in metrics collection
-- Feature factory for easy creation
-
-### [1.0.0](https://github.com/numq/reduce-and-conquer/releases/tag/1.0.0)
-
-- Initial **Reduce & Conquer** pattern
-- Basic `Feature`, `Reducer`, `Transition`
-- Pokédex example app
 
 ## Core Principles
 
